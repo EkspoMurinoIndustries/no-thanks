@@ -1,0 +1,84 @@
+output-topic:
+  - /lobby/{gameId}
+    messages:
+      - UserConnectedMessage
+      - UserDisconnectedMessage
+      - UserLeaveMessage
+      - RoundStartedMessage
+      - PutCoinMessage
+      - TakeCoinMessage
+      - EndRoundMessage
+
+  - /lobby/{gameId}/player/{playerId}
+    messages:
+      - SuccessPutCoinMessage
+      - SuccessTakeCardMessage
+      - ErrorCoinsCountMessage
+
+
+UserConnectedMessage:
+  - newPlayerName
+  - newPlayerNumber
+  - allPlayerNames
+
+UserDisconnectedMessage???:
+  - playerName
+  - playerNumber
+  - allPlayerNames
+
+UserLeaveMessage:
+  - playerName
+  - playerNumber
+  - allPlayerNames
+
+RoundStartedMessage:
+  - eachPlayerCoinCount
+  - currentPlayerNumber
+
+PutCoinMessage:
+  - playerNumber
+  - newCurrentPlayerNumber
+
+TakeCoinMessage:
+  - playerNumber
+  - newCardNumber
+
+SuccessPutCoinMessage:
+  - newCoinCount
+
+SuccessTakeCardMessage:
+  - newCoinCount
+  - cards
+
+EndRoundMessage:
+  - result
+
+ErrorCoinsCountMessage:
+  - message
+
+
+
+input-topic:
+  - /lobby/input/{gameId}
+    messages:
+      - PlayerTurnMessage
+      - StartNewRoundMessage
+
+PlayerTurnMessage:
+  - id
+  - action (putCoin, takeCard)
+
+StartNewRoundMessage:
+  - needScoreReset (true, false)
+
+
+
+
+
+
+
+
+
+
+
+
