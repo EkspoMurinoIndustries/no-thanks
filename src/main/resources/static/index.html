@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>No Thanks</title>
+</head>
+<body>
+<div id="plyer-info">
+    <p>Your name: <span id="player-name"></span></p>
+</div>
+<div id="auth">
+    <p>Sign up</p>
+    <label for="regName">Name:</label><br>
+    <input type="text" id="regName" name="regName"><br><br>
+    <button type="button" onclick="auth(); return false;">Create</button>
+</div>
+<hr>
+<div id="main">
+    <form>
+        <p>Create game</p>
+        <button type="button" onclick="createGame(); return false;">Create</button>
+    </form>
+    <hr>
+    <form>
+        <p>Connect to game</p>
+        <label for="inviteCode">Invite Code:</label><br>
+        <input type="text" id="inviteCode" name="inviteCode"><br>
+        <button type="button" onclick="connectGame(); return false;">Connect</button>
+    </form>
+</div>
+<div id="lobby">
+    <p>Players:</p>
+    <ol id="players-list">
+    </ol>
+    <button id="start-game-button" type="button" onclick="startGame(); return false;">Start</button>
+</div>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.js" integrity="sha512-lyIq9fRcCeSCXhp41XC/250UBmypAHV8KW+AhLcSEIksWHBfhzub6XXwDe67wTpOG8zrO2NAU/TYmEaCW+aQSg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js" integrity="sha512-iKDtgDyTHjAitUDdLljGhenhPwrbBfqTKWO1mkhSFH3A7blITC9MhYon6SjnMhp4o0rADGw9yAC6EW4t5a4K3g==" crossorigin="anonymous"></script>
+<script type="text/javascript" src="js/main.js"></script>
+</html>
