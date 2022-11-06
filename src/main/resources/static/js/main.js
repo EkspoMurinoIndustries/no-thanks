@@ -1,15 +1,15 @@
-let mainBlock = document.getElementById('main')
-let authBlock = document.getElementById('auth')
-let infoBlock = document.getElementById('plyer-info')
-let lobbyBlock = document.getElementById('lobby')
-let startGameButton = document.getElementById('start-game-button')
-let playersList = document.getElementById('players-list');
+let mainBlock = $('#main')
+let authBlock = $('#auth')
+let infoBlock = $('#player-info')
+let lobbyBlock = $('#lobby')
+let startGameButton = $('#start-game-button')
+let playersList = $('#players-list');
 
 renderMainWindow()
 
 function auth() {
     const xhttp = new XMLHttpRequest();
-    let playerName = document.getElementsByName('regName')[0].value
+    let playerName = $('#regName')[0].value
     if (playerName === undefined || playerName === '') {
         console.log("Empty name")
         return
@@ -41,7 +41,7 @@ function createGame() {
 }
 
 function connectGame() {
-    let inviteCodeValue = document.getElementById('inviteCode').value
+    let inviteCodeValue = $('#inviteCode').val()
     connectGameWithInviteCode(inviteCodeValue)
 }
 
@@ -70,7 +70,7 @@ function connectGameWithInviteCode(inviteCodyValue) {
 function subscribe(gameId) {
     let sock = new SockJS("/no-thanks");
     let client = Stomp.over(sock);
-    client.connect({}, frame => {
+    client.connect({}, () => {
         client.subscribe("/lobby/" + gameId, payload => {
             console.log(payload)
             let newPlayer = JSON.parse(payload.body)['newPlayerName']
@@ -89,39 +89,38 @@ function renderMainWindow() {
 }
 
 function renderLobby(isCreator, players) {
-    lobbyBlock.style.display = 'block'
-    mainBlock.style.display = 'none'
-    authBlock.style.display = 'none'
+    lobbyBlock.show()
+    mainBlock.hide()
+    authBlock.hide()
     if (isCreator) {
-        startGameButton.style.display = 'block'
+        startGameButton.show()
     } else {
-        startGameButton.style.display = 'none'
+        startGameButton.hide()
     }
-    let playersList = document.getElementById('players-list');
-    playersList.innerHTML = ''
+    playersList.html('')
     players.forEach(addPLayerToList)
 }
 
 function addPLayerToList(playerName) {
     let playerLi = document.createElement('li');
-    playerLi.appendChild(document.createTextNode(playerName));
-    playersList.appendChild(playerLi);
+    playerLi.append(document.createTextNode(playerName));
+    playersList.append(playerLi);
 }
 
 
 function authWindow() {
-    mainBlock.style.display = 'none'
-    infoBlock.style.display = 'none'
-    authBlock.style.display = 'block'
-    lobbyBlock.style.display = 'none'
+    mainBlock.hide()
+    infoBlock.hide()
+    authBlock.show()
+    lobbyBlock.hide()
 }
 
 function mainWindow(name) {
-    mainBlock.style.display = 'block'
-    infoBlock.style.display = 'block'
-    authBlock.style.display = 'none'
-    lobbyBlock.style.display = 'none'
-    document.getElementById('player-name').innerHTML = name
+    mainBlock.show()
+    infoBlock.show()
+    authBlock.hide()
+    lobbyBlock.hide()
+    $('#player-name').html(name)
 }
 
 function parseCookie() {
