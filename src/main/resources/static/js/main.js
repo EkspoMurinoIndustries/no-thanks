@@ -1,76 +1,78 @@
-let mainBlock = document.getElementById('main')
-let authBlock = document.getElementById('auth')
-let infoBlock = document.getElementById('plyer-info')
-let lobbyBlock = document.getElementById('lobby')
-let startGameButton = document.getElementById('start-game-button')
-let playersList = document.getElementById('players-list');
+let mainBlock = $('#main')
+let authBlock = $('#auth')
+let infoBlock = $('#player-info')
+let lobbyBlock = $('#lobby')
+let startGameButton = $('#start-game-button')
+let playersList = $('#players-list')
+
+let contentTypeHeader = {'Content-Type': 'application/json; charset=UTF-8'}
 
 renderMainWindow()
 
 function auth() {
-    const xhttp = new XMLHttpRequest();
-    let playerName = document.getElementsByName('regName')[0].value
+    let playerName = $('#regName')[0].value
     if (playerName === undefined || playerName === '') {
         console.log("Empty name")
         return
     }
-    xhttp.open("POST", "api/authorization", true);
-    xhttp.setRequestHeader('Content-type', 'application/json; charset=UTF-8')
-    xhttp.onload = function() {
-        renderMainWindow()
-    }
-    xhttp.withCredentials = true
-    let postObj = {
-        name: playerName
-    }
-    xhttp.send(JSON.stringify(postObj));
+    $.post({
+        url: 'api/authorization',
+        headers: contentTypeHeader,
+        dataType: 'json',
+        data: JSON.stringify({name: playerName}),
+        success: function () {
+            renderMainWindow()
+        },
+        xhrFields: {
+            withCredentials: true
+        }
+    });
 }
 
 function createGame() {
-    const xhttp = new XMLHttpRequest();
-    xhttp.open("POST", "api/game/create", true);
-    xhttp.setRequestHeader('Content-type', 'application/json; charset=UTF-8')
-    xhttp.onload = function() {
-        console.log(xhttp.response)
-        let inviteCode = JSON.parse(xhttp.response)['inviteCode']
-        connectGameWithInviteCode(inviteCode)
-    }
-    xhttp.withCredentials = true
-    let postObj = {}
-    xhttp.send(JSON.stringify(postObj));
+    $.post({
+        url: 'api/game/create',
+        headers: contentTypeHeader,
+        dataType: 'json',
+        data: JSON.stringify({}),
+        success: function (data) {
+            console.log(data)
+            connectGameWithInviteCode(data.inviteCode)
+        },
+        xhrFields: {
+            withCredentials: true
+        }
+    });
 }
 
 function connectGame() {
-    let inviteCodeValue = document.getElementById('inviteCode').value
+    let inviteCodeValue = $('#inviteCode').val()
     connectGameWithInviteCode(inviteCodeValue)
 }
 
 function connectGameWithInviteCode(inviteCodyValue) {
-    const xhttp = new XMLHttpRequest();
-    xhttp.open("POST", "api/game/connect", true);
-    xhttp.setRequestHeader('Content-type', 'application/json; charset=UTF-8')
-    xhttp.onload = function() {
-        console.log(xhttp.response)
-        let response = JSON.parse(xhttp.response)
-        if (xhttp.status === 200 && response['status'] === 'SUCCESS') {
-            let gameId = response['gameId']
-            let isCreator = response['isCreator']
-            let allPlayers = response['allPlayers']
-            subscribe(gameId)
-            renderLobby(isCreator, allPlayers)
+    $.post({
+        url: 'api/game/connect',
+        headers: contentTypeHeader,
+        dataType: 'json',
+        data: JSON.stringify({inviteCode: inviteCodyValue}),
+        success: function (data, textStatus, xhr) {
+            console.log(data)
+            if (xhr.status === 200 && data.status === 'SUCCESS') {
+                subscribe(data.gameId)
+                renderLobby(data.isCreator, data.allPlayers)
+            }
+        },
+        xhrFields: {
+            withCredentials: true
         }
-    }
-    xhttp.withCredentials = true
-    let postObj = {
-        inviteCode: inviteCodyValue
-    }
-    xhttp.send(JSON.stringify(postObj));
+    });
 }
 
 function subscribe(gameId) {
     let sock = new SockJS("/no-thanks");
     let client = Stomp.over(sock);
-    client.connect({}, frame => {
+    client.connect({}, () => {
         client.subscribe("/lobby/" + gameId, payload => {
             console.log(payload)
             let newPlayer = JSON.parse(payload.body)['newPlayerName']
@@ -89,39 +91,38 @@ function renderMainWindow() {
 }
 
 function renderLobby(isCreator, players) {
-    lobbyBlock.style.display = 'block'
-    mainBlock.style.display = 'none'
-    authBlock.style.display = 'none'
+    lobbyBlock.show()
+    mainBlock.hide()
+    authBlock.hide()
     if (isCreator) {
-        startGameButton.style.display = 'block'
+        startGameButton.show()
     } else {
-        startGameButton.style.display = 'none'
+        startGameButton.hide()
     }
-    let playersList = document.getElementById('players-list');
-    playersList.innerHTML = ''
+    playersList.html('')
     players.forEach(addPLayerToList)
 }
 
 function addPLayerToList(playerName) {
-    let playerLi = document.createElement('li');
-    playerLi.appendChild(document.createTextNode(playerName));
-    playersList.appendChild(playerLi);
+    let playerLi = $("<li/>")
+    playerLi.append(document.createTextNode(playerName));
+    playersList.append(playerLi);
 }
 
 
 function authWindow() {
-    mainBlock.style.display = 'none'
-    infoBlock.style.display = 'none'
-    authBlock.style.display = 'block'
-    lobbyBlock.style.display = 'none'
+    mainBlock.hide()
+    infoBlock.hide()
+    authBlock.show()
+    lobbyBlock.hide()
 }
 
 function mainWindow(name) {
-    mainBlock.style.display = 'block'
-    infoBlock.style.display = 'block'
-    authBlock.style.display = 'none'
-    lobbyBlock.style.display = 'none'
-    document.getElementById('player-name').innerHTML = name
+    mainBlock.show()
+    infoBlock.show()
+    authBlock.hide()
+    lobbyBlock.hide()
+    $('#player-name').html(name)
 }
 
 function parseCookie() {
