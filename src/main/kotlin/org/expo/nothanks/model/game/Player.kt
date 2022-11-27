@@ -4,9 +4,9 @@ import java.util.*
 
 data class Player(
     val name: String = "Player",
-    val cards: List<Int> = emptyList(),
-    val coins: Int,
+    val cards: MutableSet<Int> = mutableSetOf(),
+    var coins: Int,
     val id: UUID,
-    val score: Int = 0,
+    val score: MutableList<Int> = mutableListOf(),
     val status: String = "LOBBY"
 )

@@ -1,12 +1,12 @@
 package org.expo.nothanks.controller
 
-import org.expo.nothanks.service.GameService
+import org.expo.nothanks.service.GamesService
 import org.expo.nothanks.model.AuthorizationRequest
 import org.expo.nothanks.model.CreateGameRequest
 import org.expo.nothanks.model.CreateGameResponse
 import org.expo.nothanks.model.UserInfo
-import org.expo.nothanks.model.event.input.ConnectRequest
-import org.expo.nothanks.model.event.output.UserConnectedStatus
+import org.expo.nothanks.model.ConnectRequest
+import org.expo.nothanks.model.UserConnectedStatus
 import org.expo.nothanks.service.NotificationService
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -16,38 +16,38 @@ import javax.servlet.http.HttpServletResponse
 @RestController
 @RequestMapping("/api/")
 class ApplicationController(
-    val gameService: GameService,
+    val gamesService: GamesService,
     val notificationService: NotificationService
     ) {
 
     @PostMapping("/game/create")
     fun createGame(
         @RequestBody createGameRequest: CreateGameRequest,
-        @CookieValue(value = "no-thanks-token") token: UUID,
-        @CookieValue(value = "no-thanks-name") name: String,
+        @CookieValue(value = "\${no-thanks.cookies.id}") token: UUID,
+        @CookieValue(value = "\${no-thanks.cookies.name}") name: String,
     ): CreateGameResponse {
-        val game = gameService.addGame(createGameRequest, token, name)
+        val game = gamesService.addGame(createGameRequest, token, name)
         return CreateGameResponse(gameId = game.id, inviteCode = game.inviteCode)
     }
 
     @PostMapping("/game/connect")
     fun connectGame(
         @RequestBody connectRequest: ConnectRequest,
-        @CookieValue(value = "no-thanks-token") token: UUID,
-        @CookieValue(value = "no-thanks-name") name: String,
+        @CookieValue(value = "\${no-thanks.cookies.id}") token: UUID,
+        @CookieValue(value = "\${no-thanks.cookies.name}") name: String,
     ): UserConnectedStatus {
-        val gameId = gameService.getGameIdByInviteCode(connectRequest.inviteCode)
+        val gameId = gamesService.getGameIdByInviteCode(connectRequest.inviteCode)
             ?: return UserConnectedStatus(
                 status = "FAILED",
                 errorMessage = "inviteCode does not exist"
             )
-        gameService.connect(gameId = gameId, playerId = token, userName = name)
+        gamesService.connect(gameId = gameId, playerId = token, userName = name)
         notificationService.connectionNotify(gameId, name)
         return UserConnectedStatus(
             status = "SUCCESS",
             gameId = gameId,
-            isCreator = gameService.isCreator(gameId, token),
-            allPlayers = gameService.getPlayersNames(gameId)
+            isCreator = gamesService.isCreator(gameId, token),
+            allPlayers = gamesService.getPlayersNames(gameId)
         )
     }
 
