@@ -1,8 +1,8 @@
 package org.expo.nothanks.service
 
 import org.expo.nothanks.exception.GameHasNotBeenFound
-import org.expo.nothanks.model.CreateGameRequest
-import org.expo.nothanks.model.game.*
+import org.expo.nothanks.exception.InviteHasNotBeenFound
+import org.expo.nothanks.model.lobby.Lobby
 import org.expo.nothanks.utils.*
 import org.springframework.stereotype.Service
 import java.util.*
@@ -10,138 +10,130 @@ import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-
-private const val defaultCoinsCount = 9
-
 @Service
 class GamesService {
 
     private val readWriteLock: ReadWriteLock = ReentrantReadWriteLock()
     private val writeLock: Lock = readWriteLock.writeLock()
     private val readLock: Lock = readWriteLock.readLock()
-    private val activeGames: HashMap<UUID, Game> = HashMap()
 
-    private val charPool = ('A'..'Z')
+    private val gameIdToLobby: MutableMap<UUID, Lobby> = mutableMapOf()
+    private val inviteCodeToLobby: MutableMap<String, Lobby> = mutableMapOf()
+    private val lobbyByUserId: MutableMap<UUID, Lobby> = mutableMapOf()
 
-    fun addGame(createGameRequest: CreateGameRequest, creator: UUID, creatorName: String): Game {
-        val inviteCode = (1..5)
-            .map { charPool.random() }
-            .joinToString("")
-        val id = UUID.randomUUID()
-        val deck = createDeck()
-        val game = Game(
-            creator = creator,
-            currentPlayer = null,
-            id = id,
-            inviteCode = inviteCode,
-            deck = deck,
-            players = mutableListOf(createPlayer(creator, creatorName))
-        )
+    fun <T> putCoin(gameId: UUID, playerId: UUID, operation: (Lobby) -> T): T {
+        var response: T? = null
+        changeGameWithLock(gameId) { lobby ->
+            lobby.getGame().putCoin(playerId)
+            response = operation.invoke(lobby)
+        }
+        return response!!
+    }
+
+    fun <T> takeCard(gameId: UUID, playerId: UUID, operation: (Lobby) -> T): T {
+        var response: T? = null
+        changeGameWithLock(gameId) { lobby ->
+            lobby.getGame().takeCard(playerId)
+            if (lobby.getGame().isRoundEnded()) {
+                lobby.finishRound()
+            }
+            response = operation.invoke(lobby)
+        }
+        return response!!
+    }
+
+    fun createLobby(creator: UUID): Lobby {
         writeLock.lock()
         try {
-            activeGames[id] = game
+            var inviteCode = createInviteCode()
+            //Check on duplicates
+            while (inviteCodeToLobby.containsKey(inviteCode)) {
+                inviteCode = createInviteCode()
+            }
+            val lobby = Lobby(
+                creator = creator,
+                inviteCode = inviteCode,
+            )
+            gameIdToLobby[lobby.gameId] = lobby
+            inviteCodeToLobby[lobby.inviteCode] = lobby
+            return lobby
         } finally {
             writeLock.unlock()
         }
-        return game
     }
 
-    fun getGameIdByInviteCode(inviteCode: String): UUID? {
-        return activeGames.values
-            .find { it.inviteCode == inviteCode }
-            ?.id
+    fun startNewRound(gameId: UUID, playerId: UUID) {
+        changeGameWithLock(gameId) {
+            if (it.isGameStarted()) {
+                throw IllegalStateException("Game has been already started")
+            } else {
+                it.startGame()
+            }
+        }
     }
 
-    fun connect(gameId: UUID, playerId: UUID, userName: String) {
-        val game = getGame(gameId)
-        if (!game.players.any { it.id == playerId}) {
-            game.players.add(createPlayer(playerId, userName))
+    fun addPlayerToLobby(inviteCode: String, playerId: UUID, name: String) {
+        val gameId = gameIdByInviteCode(inviteCode) ?: throw InviteHasNotBeenFound(inviteCode)
+        changeGameWithLock(gameId) { lobby ->
+            if (lobby.isGameStarted()) {
+                lobby.connectPlayer(playerId)
+            } else {
+                lobby.addPlayer(playerId, name)
+            }
+            lobbyByUserId[playerId] = lobby
+        }
+    }
+
+    fun disconnectPlayerFromLobby(playerId: UUID) {
+        val gameId = gameIdByPlayerId(playerId) ?: throw IllegalStateException()
+        changeGameWithLock(gameId) { lobby ->
+            lobby.disconnectPlayer(playerId)
+            lobbyByUserId[playerId] = lobby
         }
     }
 
     fun getPlayersNames(gameId: UUID): List<String> {
-        val game = getGame(gameId)
-        return game.players.map { it.name }
+        return readGameWithLock(gameId) {
+            it.playerNames()
+        } ?: throw GameHasNotBeenFound(gameId)
     }
 
-    fun isCreator(gameId: UUID, playerId: UUID): Boolean {
-        val game = getGame(gameId)
-        return game.creator == playerId
-    }
-
-    fun startNewRound(gameId: UUID, playerId: UUID): Game {
-        val game = getGame(gameId)
-        writeLock.lock()
-        if (game.creator != playerId) {
-            throw IllegalStateException("Player is not creator")
-        }
-        try {
-            if (game.canBeStarted()) {
-                game.startGame(defaultCoinsCount)
-                return game
-            } else {
-                throw IllegalStateException("Game has been already started")
-            }
-        } finally {
-            writeLock.unlock()
-        }
-    }
-
-    fun putCoin(gameId: UUID, playerId: UUID): Game {
-        val game = getGame(gameId)
-        writeLock.lock()
-        try {
-            if (game.isStarted()) {
-                if (game.isPLayerCurrent(playerId)) {
-                    throw IllegalStateException("Player is not current")
-                }
-                if (!game.putCoin()) {
-                    throw IllegalStateException("Player does not have enough coins")
-                }
-            }
-        } finally {
-            writeLock.unlock()
-        }
-        return game
-    }
-
-    fun takeCard(gameId: UUID, playerId: UUID): Game {
-        val game = getGame(gameId)
-        writeLock.lock()
-        try {
-            if (game.isStarted()) {
-                if (!game.isPLayerCurrent(playerId)) {
-                    throw IllegalStateException("Player is not current")
-                }
-                game.takeCard()
-            }
-        } finally {
-            writeLock.unlock()
-        }
-        return game
-    }
-
-    fun getGame(gameId: UUID): Game {
+    fun <T> readGameWithLock(gameId: UUID, operation: (Lobby) -> T): T? {
         readLock.lock()
         try {
-            return activeGames[gameId] ?: throw GameHasNotBeenFound(gameId)
+            val game = gameIdToLobby[gameId] ?: return null
+            return operation.invoke(game)
         } finally {
             readLock.unlock()
         }
     }
 
-    private fun createDeck(): Deck {
-        return Deck(
-            cards = (3..35).toMutableList().shuffled().subList(0, 28)
-        )
+    fun gameIdByInviteCode(inviteCode: String): UUID? {
+        readLock.lock()
+        try {
+            return inviteCodeToLobby[inviteCode]?.gameId ?: return null
+        } finally {
+            readLock.unlock()
+        }
     }
 
-    private fun createPlayer(id: UUID, name: String): Player {
-        return Player(
-            id = id,
-            coins = defaultCoinsCount,
-            name = name
-        )
+    fun gameIdByPlayerId(playerId: UUID): UUID? {
+        readLock.lock()
+        try {
+            return lobbyByUserId[playerId]?.gameId
+        } finally {
+            readLock.unlock()
+        }
+    }
+
+    fun changeGameWithLock(gameId: UUID, operation: (Lobby) -> Unit) {
+        writeLock.lock()
+        try {
+            val lobby = gameIdToLobby[gameId] ?: throw GameHasNotBeenFound(gameId)
+            operation.invoke(lobby)
+        } finally {
+            writeLock.unlock()
+        }
     }
 
 }
