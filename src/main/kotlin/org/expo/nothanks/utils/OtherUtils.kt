@@ -6,16 +6,13 @@ import org.expo.nothanks.model.lobby.Params
 private val charPool = ('A'..'Z')
 
 fun createDeck(params: Params): Deck {
+    val cardCount = params.maxCard - params.minCard + 1
     return Deck(
-        cards = (params.maxCard..params.maxCard)
+        cards = (params.minCard..params.maxCard)
             .toMutableList()
             .shuffled()
-            .subList(0, params.maxCard - params.extraCards)
+            .subList(0, cardCount - params.extraCards)
     )
-}
-
-fun coins(params: Params): Int {
-    return params.defaultCoinsCount
 }
 
 fun createInviteCode(): String {

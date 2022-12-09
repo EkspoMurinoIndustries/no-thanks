@@ -1,14 +1,13 @@
 package org.expo.nothanks.controller
 
 import mu.KLogging
+import org.expo.nothanks.exception.SomethingWentWrong
+import org.expo.nothanks.model.*
 import org.expo.nothanks.service.GamesService
-import org.expo.nothanks.model.AuthorizationRequest
-import org.expo.nothanks.model.CreateGameResponse
-import org.expo.nothanks.model.UserInfo
-import org.expo.nothanks.model.ConnectRequest
-import org.expo.nothanks.model.UserConnectedStatus
 import org.expo.nothanks.service.NotificationService
-import org.expo.nothanks.utils.playerNames
+import org.expo.nothanks.utils.gameStatusOrNull
+import org.expo.nothanks.utils.getSafeLobbyPlayers
+import org.expo.nothanks.utils.isGameStarted
 import org.springframework.web.bind.annotation.*
 import java.util.*
 import javax.servlet.http.Cookie
@@ -19,7 +18,7 @@ import javax.servlet.http.HttpServletResponse
 class ApplicationController(
     val gamesService: GamesService,
     val notificationService: NotificationService
-    ) {
+) {
 
     @PostMapping("/game/create")
     fun createGame(
@@ -27,7 +26,7 @@ class ApplicationController(
         @CookieValue(value = "\${no-thanks.cookies.name}") name: String,
     ): CreateGameResponse {
         val lobby = gamesService.createLobby(token)
-        gamesService.addPlayerToLobby(lobby.inviteCode, token, name)
+        gamesService.addPlayerToLobby(lobby.gameId, token, name) {}
         return CreateGameResponse(gameId = lobby.gameId, inviteCode = lobby.inviteCode)
     }
 
@@ -36,23 +35,25 @@ class ApplicationController(
         @RequestBody connectRequest: ConnectRequest,
         @CookieValue(value = "\${no-thanks.cookies.id}") token: UUID,
         @CookieValue(value = "\${no-thanks.cookies.name}") name: String,
-    ): UserConnectedStatus {
-        try {
-            gamesService.addPlayerToLobby(connectRequest.inviteCode, token, name)
-        } catch (e: Exception) {
-            logger.error("Add player error", e)
-            return inviteCodeError()
-        }
-        val gameId = gamesService.gameIdByInviteCode(connectRequest.inviteCode) ?: return inviteCodeError()
-        return gamesService.readGameWithLock(gameId) { lobby ->
-            notificationService.connectionNotify(lobby.gameId, name)
-            UserConnectedStatus(
-                status = "SUCCESS",
+    ): UserConnectedResponse {
+        val gameId = gamesService.gameIdByInviteCode(connectRequest.inviteCode)
+        lateinit var response: UserConnectedResponse
+        gamesService.addPlayerToLobby(gameId, token, name) { lobby ->
+            if (lobby.isGameStarted()) {
+                notificationService.gameConnection(lobby, token)
+            } else {
+                notificationService.lobbyConnection(lobby, token)
+            }
+            response = UserConnectedResponse(
+                isStarted = lobby.isGameStarted(),
                 gameId = lobby.gameId,
                 isCreator = lobby.creator == token,
-                allPlayers = lobby.playerNames()
+                allPlayers = lobby.getSafeLobbyPlayers(),
+                playerNumber = lobby.players[token]!!.number,
+                gameStatus = lobby.gameStatusOrNull(token)
             )
-        } ?: inviteCodeError()
+        }
+        return response
     }
 
     @PostMapping("/authorization")
@@ -61,7 +62,7 @@ class ApplicationController(
         response: HttpServletResponse
     ): UserInfo {
         if (authorizationRequest.name.isBlank()) {
-            throw IllegalArgumentException("Name is blank")
+            throw SomethingWentWrong("Name is blank")
         }
         val token = UUID.randomUUID()
         val c1 = Cookie("no-thanks-token", token.toString()).also {
@@ -75,13 +76,6 @@ class ApplicationController(
         response.addCookie(c1)
         response.addCookie(c2)
         return UserInfo(token = token)
-    }
-
-    private fun inviteCodeError(): UserConnectedStatus {
-        return UserConnectedStatus(
-            status = "FAILED",
-            errorMessage = "inviteCode does not exist"
-        )
     }
 
     private companion object : KLogging()

@@ -1,6 +1,6 @@
 package org.expo.nothanks.model.game
 
-enum class GameStatus {
+enum class GameStatusEnum {
 
     STARTED, PAUSED
 

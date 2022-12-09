@@ -1,7 +1,7 @@
 package org.expo.nothanks.utils
 
 import org.expo.nothanks.model.game.Game
-import org.expo.nothanks.model.game.GameStatus
+import org.expo.nothanks.model.game.GameStatusEnum
 import org.expo.nothanks.model.game.Player
 import org.expo.nothanks.model.game.PlayerResult
 import java.util.*
@@ -16,6 +16,14 @@ fun Game.takeCard(playerId: UUID) {
     } else {
         throw IllegalStateException("Wrong game status")
     }
+}
+
+fun Game.getPlayer(playerId: UUID): Player {
+    return playerSequence().find { it.id == playerId } ?: throw IllegalStateException()
+}
+
+fun Game.isPlayerCurrent(playerId: UUID): Boolean {
+    return currentPlayer.id == playerId
 }
 
 fun Game.putCoin(playerId: UUID) {
@@ -47,7 +55,11 @@ fun Game.calculateResult(): Map<UUID, PlayerResult> {
 }
 
 fun Game.continueGame() {
-    this.status = GameStatus.STARTED
+    this.status = GameStatusEnum.STARTED
+}
+
+fun Game.currentCard(): Int {
+    return deck.cards[deck.skip]
 }
 
 fun Game.playerSequence(): Sequence<Player> {
@@ -73,10 +85,12 @@ fun calculateCards(cards: Set<Int>): Int {
 }
 
 fun Game.pause() {
-    status = GameStatus.PAUSED
+    status = GameStatusEnum.PAUSED
 }
 
 fun Game.currentCardNumber() = deck.cards[deck.skip]
+
+fun Game.previousCard() = deck.cards[deck.skip - 1]
 
 fun Game.checkPlayerCurrent(playerId: UUID) {
     if (currentPlayer.id != playerId) {
@@ -90,4 +104,4 @@ fun Game.currentPlayer() = currentPlayer
 
 fun Game.currentPlayerNumber() = currentPlayer.number
 
-fun Game.isValid() = this.status != GameStatus.PAUSED
+fun Game.isValid() = this.status != GameStatusEnum.PAUSED

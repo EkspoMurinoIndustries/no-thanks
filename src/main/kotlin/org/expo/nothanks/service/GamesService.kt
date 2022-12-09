@@ -2,6 +2,7 @@ package org.expo.nothanks.service
 
 import org.expo.nothanks.exception.GameHasNotBeenFound
 import org.expo.nothanks.exception.InviteHasNotBeenFound
+import org.expo.nothanks.model.event.input.NewParams
 import org.expo.nothanks.model.lobby.Lobby
 import org.expo.nothanks.utils.*
 import org.springframework.stereotype.Service
@@ -21,25 +22,21 @@ class GamesService {
     private val inviteCodeToLobby: MutableMap<String, Lobby> = mutableMapOf()
     private val lobbyByUserId: MutableMap<UUID, Lobby> = mutableMapOf()
 
-    fun <T> putCoin(gameId: UUID, playerId: UUID, operation: (Lobby) -> T): T {
-        var response: T? = null
+    fun putCoin(gameId: UUID, playerId: UUID, operation: (Lobby) -> (Unit)) {
         changeGameWithLock(gameId) { lobby ->
             lobby.getGame().putCoin(playerId)
-            response = operation.invoke(lobby)
+            operation.invoke(lobby)
         }
-        return response!!
     }
 
-    fun <T> takeCard(gameId: UUID, playerId: UUID, operation: (Lobby) -> T): T {
-        var response: T? = null
+    fun takeCard(gameId: UUID, playerId: UUID, operation: (Lobby) -> (Unit)) {
         changeGameWithLock(gameId) { lobby ->
             lobby.getGame().takeCard(playerId)
             if (lobby.getGame().isRoundEnded()) {
                 lobby.finishRound()
             }
-            response = operation.invoke(lobby)
+            operation.invoke(lobby)
         }
-        return response!!
     }
 
     fun createLobby(creator: UUID): Lobby {
@@ -62,18 +59,40 @@ class GamesService {
         }
     }
 
-    fun startNewRound(gameId: UUID, playerId: UUID) {
+    fun startNewRound(gameId: UUID, playerId: UUID, operation: (Lobby) -> (Unit)) {
         changeGameWithLock(gameId) {
-            if (it.isGameStarted()) {
-                throw IllegalStateException("Game has been already started")
-            } else {
-                it.startGame()
-            }
+            checkOnLobbyChange(it, playerId)
+            it.startGame()
+            operation.invoke(it)
         }
     }
 
-    fun addPlayerToLobby(inviteCode: String, playerId: UUID, name: String) {
-        val gameId = gameIdByInviteCode(inviteCode) ?: throw InviteHasNotBeenFound(inviteCode)
+    fun changeParams(gameId: UUID, playerId: UUID, params: NewParams, operation: (Lobby) -> (Unit)) {
+        changeGameWithLock(gameId) {
+            checkOnLobbyChange(it, playerId)
+            it.updateParams(params)
+            operation.invoke(it)
+        }
+    }
+
+    fun resetHistory(gameId: UUID, playerId: UUID, operation: (Lobby) -> (Unit)) {
+        changeGameWithLock(gameId) {
+            checkOnLobbyChange(it, playerId)
+            it.reset()
+            operation.invoke(it)
+        }
+    }
+
+    private fun checkOnLobbyChange(lobby: Lobby, playerId: UUID) {
+        if (lobby.isGameStarted()) {
+            throw IllegalStateException("Game has been already started")
+        }
+        if (lobby.creator != playerId) {
+            throw IllegalStateException("Player is not creator")
+        }
+    }
+
+    fun addPlayerToLobby(gameId: UUID, playerId: UUID, name: String, operation: (Lobby) -> (Unit)) {
         changeGameWithLock(gameId) { lobby ->
             if (lobby.isGameStarted()) {
                 lobby.connectPlayer(playerId)
@@ -81,46 +100,71 @@ class GamesService {
                 lobby.addPlayer(playerId, name)
             }
             lobbyByUserId[playerId] = lobby
+            operation.invoke(lobby)
         }
     }
 
     fun disconnectPlayerFromLobby(playerId: UUID) {
-        val gameId = gameIdByPlayerId(playerId) ?: throw IllegalStateException()
+        val gameId = gameIdByPlayerId(playerId)
         changeGameWithLock(gameId) { lobby ->
             lobby.disconnectPlayer(playerId)
-            lobbyByUserId[playerId] = lobby
+            if (lobby.isGameStarted()) {
+                lobbyByUserId[playerId] = lobby
+            } else {
+                lobbyByUserId.remove(playerId)
+                if (lobby.creator == playerId) {
+                    deleteLobby(lobby)
+                }
+            }
+            if (lobby.shouldBeDeleted()) {
+                deleteLobby(lobby)
+            }
         }
     }
 
-    fun getPlayersNames(gameId: UUID): List<String> {
-        return readGameWithLock(gameId) {
-            it.playerNames()
-        } ?: throw GameHasNotBeenFound(gameId)
+    private fun deleteLobby(lobby: Lobby) {
+        gameIdToLobby.remove(lobby.gameId)
+        inviteCodeToLobby.remove(lobby.inviteCode)
+        lobby.players.keys.forEach {
+            val lobbyOfPlayer = lobbyByUserId[it]
+            if (lobbyOfPlayer != null && lobbyOfPlayer.gameId == lobby.gameId) {
+                lobbyByUserId.remove(it)
+            }
+        }
     }
 
-    fun <T> readGameWithLock(gameId: UUID, operation: (Lobby) -> T): T? {
+    fun <T> readGameWithLock(gameId: UUID, operation: (Lobby) -> T): T {
         readLock.lock()
         try {
-            val game = gameIdToLobby[gameId] ?: return null
+            val game = gameIdToLobby[gameId] ?: throw GameHasNotBeenFound(gameId)
             return operation.invoke(game)
         } finally {
             readLock.unlock()
         }
     }
 
-    fun gameIdByInviteCode(inviteCode: String): UUID? {
+    fun lobbyExist(gameId: UUID): Boolean {
         readLock.lock()
         try {
-            return inviteCodeToLobby[inviteCode]?.gameId ?: return null
+            return gameIdToLobby.containsKey(gameId)
         } finally {
             readLock.unlock()
         }
     }
 
-    fun gameIdByPlayerId(playerId: UUID): UUID? {
+    fun gameIdByInviteCode(inviteCode: String): UUID {
         readLock.lock()
         try {
-            return lobbyByUserId[playerId]?.gameId
+            return inviteCodeToLobby[inviteCode]?.gameId ?: throw InviteHasNotBeenFound(inviteCode)
+        } finally {
+            readLock.unlock()
+        }
+    }
+
+    fun gameIdByPlayerId(playerId: UUID): UUID {
+        readLock.lock()
+        try {
+            return lobbyByUserId[playerId]?.gameId ?: throw IllegalStateException()
         } finally {
             readLock.unlock()
         }

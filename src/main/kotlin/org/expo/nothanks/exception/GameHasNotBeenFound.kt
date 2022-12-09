@@ -1,5 +1,9 @@
 package org.expo.nothanks.exception
 
-import java.util.UUID
+import java.util.*
 
-class GameHasNotBeenFound(gameId: UUID): IllegalStateException("Game has not been found by id $gameId")
+class GameHasNotBeenFound(gameId: UUID) :
+    NoThanksException(
+        "Game has not been found: $gameId",
+        "Game has not been found"
+    )

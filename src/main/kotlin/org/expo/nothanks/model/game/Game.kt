@@ -9,5 +9,5 @@ data class Game(
     val deck: Deck,
     val id: UUID,
     val inviteCode: String,
-    var status: GameStatus = GameStatus.STARTED,
+    var status: GameStatusEnum = GameStatusEnum.STARTED,
 )

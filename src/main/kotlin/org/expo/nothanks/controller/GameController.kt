@@ -2,10 +2,9 @@ package org.expo.nothanks.controller
 
 
 import mu.KLogging
-import org.expo.nothanks.model.event.input.StartNewRoundMessage
-import org.expo.nothanks.model.event.output.ErrorMessage
+import org.expo.nothanks.exception.NoThanksException
+import org.expo.nothanks.model.event.input.GameChangingMessage
 import org.expo.nothanks.model.event.input.PlayerTurnMessage
-import org.expo.nothanks.model.event.output.Score
 import org.expo.nothanks.service.GamesService
 import org.expo.nothanks.service.NotificationService
 import org.expo.nothanks.utils.*
@@ -23,16 +22,29 @@ class GameController(
     val notificationService: NotificationService
 ) {
     @MessageMapping("/lobby/input/{gameId}/round")
-    fun round(@DestinationVariable gameId: UUID, @Payload message: StartNewRoundMessage, principal: Principal) {
+    fun round(@DestinationVariable gameId: UUID, @Payload message: GameChangingMessage, principal: Principal) {
         try {
-            gamesService.startNewRound(gameId, principal.getPlayerId())
-            notificationService.gameStarted(gameId)
+            if (message.newParams != null) {
+                gamesService.changeParams(gameId, principal.getPlayerId(), message.newParams) {
+                    notificationService.paramsChanged(it)
+                }
+            }
+            if (message.scoreReset) {
+                gamesService.resetHistory(gameId, principal.getPlayerId()) {
+                    notificationService.scoreReset(it)
+                }
+            }
+            if (message.wantToStart) {
+                gamesService.startNewRound(gameId, principal.getPlayerId()) {
+                    notificationService.gameStarted(it)
+                }
+            }
         } catch (e: Exception) {
             logger.error("startNewRound error", e)
-            notificationService.messageToUser(
+            notificationService.sendErrorToUser(
                 gameId,
                 principal.getPlayerId(),
-                ErrorMessage(e.message ?: "Unexpected error")
+                e.message ?: "Unexpected error"
             )
         }
     }
@@ -42,36 +54,23 @@ class GameController(
         val playerId = principal.getPlayerId()
         try {
             if (message.action == "putCoin") {
-                var newPlayerNumber: Int = -1
-                var playerNumber: Int = -1
                 gamesService.putCoin(gameId, playerId) {
-                    newPlayerNumber = it.getGame().currentPlayerNumber()
-                    playerNumber = it.getGame().previousPlayer().number
+                    notificationService.putCoin(it)
+                    notificationService.updateInfoForPrevious(it)
                 }
-                notificationService.putCoin(gameId, playerNumber, newPlayerNumber)
             } else {
-                var ended = false
-                var playerNumber: Int = -1
-                var card: Int = -1
-                var result: Map<Int, Score>? = null
                 gamesService.takeCard(gameId, playerId) {
-                    ended = it.isGameStarted()
-                    if (it.isGameStarted()) {
-                        playerNumber = it.getGame().currentPlayerNumber()
-                        card = it.getGame().currentCardNumber()
+                    if (!it.getGame().isRoundEnded()) {
+                        notificationService.endRound(it)
                     } else {
-                        result = it.getResult()
+                        notificationService.takeCard(it)
+                        notificationService.updateInfo(it)
                     }
                 }
-                if (ended) {
-                    notificationService.endRound(gameId, result!!)
-                } else {
-                    notificationService.takeCard(gameId, playerNumber, card)
-                }
             }
-        } catch (e: Exception) {
+        } catch (e: NoThanksException) {
             logger.error("Action error", e)
-            notificationService.messageToUser(gameId, playerId, ErrorMessage(e.message ?: "Unexpected error"))
+            notificationService.sendErrorToUser(gameId, playerId, e.publicMessage)
         }
     }
 
