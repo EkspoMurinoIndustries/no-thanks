@@ -1,13 +1,13 @@
 package org.expo.nothanks.controller
 
-import org.expo.nothanks.service.GameService
-import org.expo.nothanks.model.AuthorizationRequest
-import org.expo.nothanks.model.CreateGameRequest
-import org.expo.nothanks.model.CreateGameResponse
-import org.expo.nothanks.model.UserInfo
-import org.expo.nothanks.model.event.input.ConnectRequest
-import org.expo.nothanks.model.event.output.UserConnectedStatus
+import mu.KLogging
+import org.expo.nothanks.exception.SomethingWentWrong
+import org.expo.nothanks.model.*
+import org.expo.nothanks.service.GamesService
 import org.expo.nothanks.service.NotificationService
+import org.expo.nothanks.utils.gameStatusOrNull
+import org.expo.nothanks.utils.getSafeLobbyPlayers
+import org.expo.nothanks.utils.isGameStarted
 import org.springframework.web.bind.annotation.*
 import java.util.*
 import javax.servlet.http.Cookie
@@ -16,39 +16,44 @@ import javax.servlet.http.HttpServletResponse
 @RestController
 @RequestMapping("/api/")
 class ApplicationController(
-    val gameService: GameService,
+    val gamesService: GamesService,
     val notificationService: NotificationService
-    ) {
+) {
 
     @PostMapping("/game/create")
     fun createGame(
-        @RequestBody createGameRequest: CreateGameRequest,
-        @CookieValue(value = "no-thanks-token") token: UUID,
-        @CookieValue(value = "no-thanks-name") name: String,
+        @CookieValue(value = "\${no-thanks.cookies.id}") token: UUID,
+        @CookieValue(value = "\${no-thanks.cookies.name}") name: String,
     ): CreateGameResponse {
-        val game = gameService.addGame(createGameRequest, token, name)
-        return CreateGameResponse(gameId = game.id, inviteCode = game.inviteCode)
+        val lobby = gamesService.createLobby(token)
+        gamesService.addPlayerToLobby(lobby.gameId, token, name) {}
+        return CreateGameResponse(gameId = lobby.gameId, inviteCode = lobby.inviteCode)
     }
 
     @PostMapping("/game/connect")
     fun connectGame(
         @RequestBody connectRequest: ConnectRequest,
-        @CookieValue(value = "no-thanks-token") token: UUID,
-        @CookieValue(value = "no-thanks-name") name: String,
-    ): UserConnectedStatus {
-        val gameId = gameService.getGameIdByInviteCode(connectRequest.inviteCode)
-            ?: return UserConnectedStatus(
-                status = "FAILED",
-                errorMessage = "inviteCode does not exist"
+        @CookieValue(value = "\${no-thanks.cookies.id}") token: UUID,
+        @CookieValue(value = "\${no-thanks.cookies.name}") name: String,
+    ): UserConnectedResponse {
+        val gameId = gamesService.gameIdByInviteCode(connectRequest.inviteCode)
+        lateinit var response: UserConnectedResponse
+        gamesService.addPlayerToLobby(gameId, token, name) { lobby ->
+            if (lobby.isGameStarted()) {
+                notificationService.gameConnection(lobby, token)
+            } else {
+                notificationService.lobbyConnection(lobby, token)
+            }
+            response = UserConnectedResponse(
+                isStarted = lobby.isGameStarted(),
+                gameId = lobby.gameId,
+                isCreator = lobby.creator == token,
+                allPlayers = lobby.getSafeLobbyPlayers(),
+                playerNumber = lobby.players[token]!!.number,
+                gameStatus = lobby.gameStatusOrNull(token)
             )
-        gameService.connect(gameId = gameId, playerId = token, userName = name)
-        notificationService.connectionNotify(gameId, name)
-        return UserConnectedStatus(
-            status = "SUCCESS",
-            gameId = gameId,
-            isCreator = gameService.isCreator(gameId, token),
-            allPlayers = gameService.getPlayersNames(gameId)
-        )
+        }
+        return response
     }
 
     @PostMapping("/authorization")
@@ -57,7 +62,7 @@ class ApplicationController(
         response: HttpServletResponse
     ): UserInfo {
         if (authorizationRequest.name.isBlank()) {
-            throw IllegalArgumentException("Name is blank")
+            throw SomethingWentWrong("Name is blank")
         }
         val token = UUID.randomUUID()
         val c1 = Cookie("no-thanks-token", token.toString()).also {
@@ -73,4 +78,5 @@ class ApplicationController(
         return UserInfo(token = token)
     }
 
+    private companion object : KLogging()
 }

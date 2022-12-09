@@ -1,0 +1,4 @@
+no-thanks:
+  cookies:
+    id: no-thanks-token
+    name: no-thanks-name

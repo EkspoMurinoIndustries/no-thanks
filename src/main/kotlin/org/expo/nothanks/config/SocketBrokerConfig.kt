@@ -1,5 +1,6 @@
 package org.expo.nothanks.config
 
+import org.expo.nothanks.security.NoThanksHandshakeHandler
 import org.springframework.context.annotation.Configuration
 import org.springframework.messaging.simp.config.MessageBrokerRegistry
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
@@ -8,7 +9,9 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 @Configuration
 @EnableWebSocketMessageBroker
-class SocketBrokerConfig: WebSocketMessageBrokerConfigurer {
+class SocketBrokerConfig(
+    val noThanksHandshakeHandler: NoThanksHandshakeHandler
+) : WebSocketMessageBrokerConfigurer {
 
     override fun configureMessageBroker(config: MessageBrokerRegistry) {
         config.enableSimpleBroker("/lobby")
@@ -17,6 +20,9 @@ class SocketBrokerConfig: WebSocketMessageBrokerConfigurer {
     }
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
-        registry.addEndpoint("/no-thanks").withSockJS()
+        registry
+            .addEndpoint("/no-thanks")
+            .setHandshakeHandler(noThanksHandshakeHandler)
+            .withSockJS()
     }
 }
