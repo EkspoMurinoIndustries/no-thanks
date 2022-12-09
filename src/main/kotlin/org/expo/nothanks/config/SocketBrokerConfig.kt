@@ -11,7 +11,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 class SocketBrokerConfig(
     val noThanksHandshakeHandler: NoThanksHandshakeHandler
-): WebSocketMessageBrokerConfigurer {
+) : WebSocketMessageBrokerConfigurer {
 
     override fun configureMessageBroker(config: MessageBrokerRegistry) {
         config.enableSimpleBroker("/lobby")
