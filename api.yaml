@@ -11,10 +11,8 @@ output-topic:
 
   - /lobby/{gameId}/player/{playerId}
     messages:
-      - SuccessPutCoinMessage
-      - SuccessTakeCardMessage
+      - PlayerPersonalInfoMessage
       - ErrorMessage
-
 
 UserConnectedMessage:
   - newPlayerName
@@ -53,7 +51,7 @@ SuccessTakeCardMessage:
 EndRoundMessage:
   - result
 
-ErrorCoinsCountMessage:
+ErrorMessage:
   - message
 
 
