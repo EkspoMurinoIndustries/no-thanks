@@ -1,0 +1,239 @@
+*{
+    padding: 0;
+    margin: 0;
+    border: none;
+    font-family: Gotham, sans-serif;
+    color: white;
+}
+
+ol{
+    list-style-type: none;
+}
+
+#auth-screen, #main-screen, #lobby-screen{
+    display: none;
+}
+
+textarea:focus, input:focus{
+    outline: none;
+}
+
+.background {
+    height: 100vh;
+    width: 100%;
+    background: radial-gradient(330% 262% at 31% -33%, rgba(204, 0, 255, 0.3) 0%, rgba(75, 8, 216, 0.2) 33%, rgba(37, 216, 255, 0) 100%), #68AEFF;
+    display: grid;
+    place-items: center;
+}
+
+.outer-border {
+    position: relative;
+    min-width: 850px;
+    width: 70vw;
+    min-height: 600px;
+}
+
+.form-block {
+    background:
+            linear-gradient(155deg, #765ddd, #5790fb) padding-box,
+            linear-gradient(to bottom right, #a995ff, #607af5) border-box;
+    border: 4px solid transparent;
+    border-radius: 26px;
+    width: 500px;
+    margin: 40px auto;
+    padding-bottom: 40px;
+    padding-top: 50px;
+}
+
+.label{
+    display: block;
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 24px;
+}
+
+.input{
+    background:
+            linear-gradient(to right, #8f9af5, #8f9af5) padding-box,
+            linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
+    border: 3px solid transparent;
+    border-radius: 10px;
+    width: 400px;
+    height: 60px;
+    font-size: 30px;
+    padding-left: 15px;
+    padding-right: 15px;
+    margin: 20px auto;
+    display: block;
+}
+
+.button{
+    display: block;
+    height: 50px;
+    color: #502d9b;
+    background:
+            linear-gradient(to right, white, white) padding-box,
+            linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
+    border: 3px solid transparent;
+    border-radius: 10px;
+    font-size: 30px;
+    font-family: 'Fredoka One', sans-serif;
+    box-shadow: 2px 5px 0 rgba(36, 34, 125, 0.8);
+    margin: auto;
+    padding: 0 20px;
+}
+
+.button:hover{
+    color: white;
+    background:
+            linear-gradient(to right, #502d9b, #502d9b) padding-box,
+            linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
+}
+
+.button:disabled,
+.button[disabled] {
+    background: linear-gradient(to right, #d8d8d8, #d8d8d8)padding-box, linear-gradient(to bottom, #808080, #727272) border-box;
+    color: #959595;
+    box-shadow: none;
+}
+
+.ok-button{
+    margin-top: 30px;
+}
+
+.invite-code-input{
+    text-transform: uppercase;
+    text-align: center;
+    width: 200px;
+}
+
+.connect-form {
+    margin-top: 70px;
+}
+
+.lobby-grid{
+    height: 500px;
+    margin-top: 20px;
+    display: flex;
+}
+
+.lobby-grid > div{
+    flex: 1;
+}
+
+.players-block{
+    padding: 30px 20px;
+    margin: 0 40px 0 0;
+    max-width: 380px;
+}
+
+.players-count-block{
+    text-align: center;
+}
+
+.players-block span {
+    text-transform: uppercase;
+    font-size: 25px;
+    text-align: center;
+}
+
+.players-li {
+    height: 60px;
+    background:
+            linear-gradient(to right, #8f9af5, #8f9af5) padding-box,
+            linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
+    border: 2px solid transparent;
+    border-radius: 35px 10px 10px 35px;
+    vertical-align: middle
+}
+
+.players-ol {
+    padding-top: 20px;
+}
+
+.player-ava-block {
+    width: 50px;
+    height: 50px;
+    float: left;
+    background-color: #e3e2ff;
+    border-radius: 50%;
+    margin: 5px;
+}
+
+.nickname{
+    line-height: 59px;
+    margin-left: 10px;
+}
+
+.lobby-control-block {
+    margin: 0 auto;
+    position: relative;
+
+}
+.tabs {
+    position: relative;
+}
+.tabs::before,
+.tabs::after {
+    content: "";
+    display: table;
+}
+.tabs::after {
+    clear: both;
+}
+.tab {
+    float: left;
+    width: 50%;
+}
+.tab-switch {
+    display: none;
+}
+.tab-label {
+    text-align: center;
+    position: relative;
+    display: block;
+    line-height: 36px;
+    cursor: pointer;
+    top: 0;
+    border: 4px solid #a995ff;
+    background-color: #6e6be6;
+    border-radius: 26px 26px 0 0;
+}
+
+.tab-content {
+    height: 450px;
+    width: 100%;
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    opacity: 0;
+    background:
+            linear-gradient(to bottom, #765ddd, #5790fb) padding-box,
+            linear-gradient(to bottom, #a995ff, #607af5) border-box;
+    border: 4px solid transparent;
+    border-top: 0;
+    border-radius: 0 0 26px 26px;
+    box-sizing: border-box;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-switch:checked + .tab-label {
+    border-bottom: 0;
+    background-color: #765ddd;
+    height: 40px;
+    z-index: 1;
+}
+.tab-switch:checked + label + .tab-content {
+    z-index: 2;
+    opacity: 1;
+}
+
+.lobby-tab-content span{
+    font-size: 25px;
+    flex-grow: 1;
+}
+
+
+
