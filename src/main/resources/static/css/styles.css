@@ -10,10 +10,6 @@ ol{
     list-style-type: none;
 }
 
-#auth-screen, #main-screen, #lobby-screen{
-    display: none;
-}
-
 textarea:focus, input:focus{
     outline: none;
 }
@@ -140,11 +136,17 @@ textarea:focus, input:focus{
 .players-li {
     height: 60px;
     background:
-            linear-gradient(to right, #8f9af5, #8f9af5) padding-box,
+            linear-gradient(to right, #6d6de6, #6d6de6) padding-box,
             linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
     border: 2px solid transparent;
     border-radius: 35px 10px 10px 35px;
-    vertical-align: middle
+    vertical-align: middle;
+    margin-bottom: 7px
+}
+.players-li.current-player {
+    background:
+            linear-gradient(to right, #8f9af5, #8f9af5) padding-box,
+            linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
 }
 
 .players-ol {

@@ -30,7 +30,8 @@ UserLeaveMessage:
   - allPlayerNames
 
 RoundStartedMessage:
-  - eachPlayerCoinCount
+  - players
+  - currentCard
   - currentPlayerNumber
 
 PutCoinMessage:

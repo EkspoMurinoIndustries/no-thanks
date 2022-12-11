@@ -26,7 +26,7 @@
             </div>
         </div>
     </div>
-    <div id="main-screen">
+    <div id="create-and-connect-game-screen">
         <div class="outer-border">
             <div id="main-block">
                 <div class="logo middle-logo">
@@ -35,7 +35,7 @@
                 </div>
                 <div class="form-block create-game">
                     <form>
-                        <button class="button create-game-button"type="button" onclick="createGame(); return false;">Create Game</button>
+                        <button class="button create-game-button" type="button" onclick="createGame(); return false;">Create Game</button>
                     </form>
                     <form class="connect-form">
                         <input class="input invite-code-input" type="text" id="inviteCode" name="inviteCode" maxlength="6">
@@ -57,7 +57,7 @@
                         <div class="players-count-block">
                             <span>Players <span id="players-count">1</span>/<span id="max-players-count">10</span></span>
                         </div>
-                        <ol class="players-ol">
+                        <ol id="players-list" class="players-ol">
                             <li class="players-li">
                                 <div class="player-ava-block"></div>
                                 <span class="nickname">MC_ZALUPA</span>
@@ -69,8 +69,8 @@
                             <input type="radio" name="css-tabs" id="tab-1" checked class="tab-switch">
                             <label for="tab-1" class="tab-label">Lobby</label>
                             <div class="tab-content lobby-tab-content">
-                                <span>Invite code: <span id="invite-code"></span>AAAAAA</span>
-                                <button class="button" type="button" onclick="startGame(); return false;">Start Game</button>
+                                <span>Invite code: <span id="invite-code"></span></span>
+                                <button class="button" id="start-game-button" type="button" onclick="startGame(); return false;">Start Game</button>
                             </div>
                         </div>
                         <div class="tab">
@@ -101,10 +101,10 @@
             <div class="player-status-block">
                 <div class="own-player-card">
                     <div class="coins-card-block"><span id="coins-count">3</span></div>
-                    <div class="cards-card-block"><span>3-7, 9, 11, 14, 16, 30-35</span></div>
+                    <div class="cards-card-block"><span id="player-cards">3-7, 9, 11, 14, 16, 30-35</span></div>
                 </div>
             </div>
-            <div class="game-players-block form-block">
+            <div class="game-players-block form-block" id="game-players-block">
                 <div class="player-card">
                     <div class="nickname-player-card-block">
                         <div class="player-ava-block"></div>
@@ -140,16 +140,10 @@
         </div>
     </div>
 </div>
-
-<div id="game">
-    <p>Players:</p>
-    <ol id="players-game-list">
-    </ol>
-    <p>Your cards:<span id="player-cards"></span></p>
-</div>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.js" integrity="sha512-lyIq9fRcCeSCXhp41XC/250UBmypAHV8KW+AhLcSEIksWHBfhzub6XXwDe67wTpOG8zrO2NAU/TYmEaCW+aQSg==" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js" integrity="sha512-iKDtgDyTHjAitUDdLljGhenhPwrbBfqTKWO1mkhSFH3A7blITC9MhYon6SjnMhp4o0rADGw9yAC6EW4t5a4K3g==" crossorigin="anonymous"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<script type="text/javascript" src="js/render.js"></script>
 <script type="text/javascript" src="js/main.js"></script>
 </html>
