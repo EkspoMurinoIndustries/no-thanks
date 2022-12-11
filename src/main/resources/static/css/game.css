@@ -34,7 +34,8 @@
 }
 
 .coins-card-block {
-    width: 40px;
+    width: 55px;
+    text-align: center;
     float: left;
     border-right: #c5c3f9 2px solid;
     margin-right: 10px;

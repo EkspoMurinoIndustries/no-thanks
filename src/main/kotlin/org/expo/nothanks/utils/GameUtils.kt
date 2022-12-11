@@ -1,5 +1,7 @@
 package org.expo.nothanks.utils
 
+import org.expo.nothanks.exception.GameException
+import org.expo.nothanks.exception.PlayerException
 import org.expo.nothanks.model.game.Game
 import org.expo.nothanks.model.game.GameStatusEnum
 import org.expo.nothanks.model.game.Player
@@ -31,13 +33,13 @@ fun Game.putCoin(playerId: UUID) {
         this.checkPlayerCurrent(playerId)
         val currentPlayer = currentPlayer()
         if (currentPlayer.coins < 1) {
-            throw IllegalStateException("Player does not have enough coins")
+            throw PlayerException("Player does not have enough coins", id, playerId)
         }
         currentPlayer.coins = currentPlayer.coins - 1
         currentCardCoins += 1
         setNextPlayer()
     } else {
-        throw IllegalStateException("Wrong game status")
+        throw GameException("Wrong game status", id)
     }
 }
 
@@ -94,7 +96,7 @@ fun Game.previousCard() = deck.cards[deck.skip - 1]
 
 fun Game.checkPlayerCurrent(playerId: UUID) {
     if (currentPlayer.id != playerId) {
-        throw IllegalStateException("Player is not current")
+        throw PlayerException("Player is not current", this.id, playerId)
     }
 }
 
