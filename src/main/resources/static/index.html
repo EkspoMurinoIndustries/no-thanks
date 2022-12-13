@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>No Thanks</title>
     <link href = "fonts/gotham/style.css" rel = "stylesheet" type = "text/css" />
     <link href='https://fonts.googleapis.com/css?family=Fredoka One' rel='stylesheet'>
@@ -26,7 +27,7 @@
             </div>
         </div>
     </div>
-    <div id="create-and-connect-game-screen">
+    <div id="create-and-connect-game-screen2">
         <div class="outer-border">
             <div id="main-block">
                 <div class="logo middle-logo">
@@ -95,49 +96,69 @@
     <div id="game-screen">
         <div class="center-block">
             <div class="current-card-block">
-                <span id="current-card">32</span>
-                <span id="current-card-coins">7</span>
+                <span id="current-card">-1</span>
+                <span id="current-card-coins">0</span>
             </div>
             <div class="player-status-block">
                 <div class="own-player-card">
-                    <div class="coins-card-block"><span id="coins-count">3</span></div>
-                    <div class="cards-card-block"><span id="player-cards">3-7, 9, 11, 14, 16, 30-35</span></div>
+                    <div class="coins-card-block"><span id="coins-count">-1</span></div>
+                    <div class="cards-card-block"><span id="player-cards"></span></div>
                 </div>
             </div>
             <div class="game-players-block form-block" id="game-players-block">
-                <div class="player-card">
-                    <div class="nickname-player-card-block">
-                        <div class="player-ava-block"></div>
-                        <span class="nickname">MC_ZALUPA</span>
-                    </div>
-                    <div class="status-player-card-block">
-                        <div class="cards-card-block"><span>3-7, 9, 11, 14, 16, 20, 22, 24, 27 30-35</span></div>
-                    </div>
-                </div>
-                <div class="player-card turn">
-                    <div class="nickname-player-card-block">
-                        <div class="player-ava-block"></div>
-                        <span class="nickname">DART_VADER</span>
-                    </div>
-                    <div class="status-player-card-block">
-                        <div class="cards-card-block"><span>3-7, 9, 11</span></div>
-                    </div>
-                </div>
-                <div class="player-card">
-                    <div class="nickname-player-card-block">
-                        <div class="player-ava-block"></div>
-                        <span class="nickname">MR_Pukin</span>
-                    </div>
-                    <div class="status-player-card-block">
-                        <div class="cards-card-block"><span>3-7, 9, 11, 14, 16, 20, 22, 24, 27 30-35</span></div>
-                    </div>
-                </div>
             </div>
             <div class="game-buttons-block">
                 <button disabled class="button" id="put-coin" type="button" onclick="putCoin(); return false;">Put Coin</button>
                 <button class="button" id="take-card" type="button" onclick="takeCard(); return false;">Take Card</button>
             </div>
         </div>
+    </div>
+    <div id="result-screen">
+        <div class="logo little-logo">
+            <img src="img/hand_logo.png" class="logo-img" alt="NT">
+            <p>NO THANKS!</p>
+        </div>
+        <div class="result-block form-block">
+            <div class="result-block-header"><span>Result:</span></div>
+            <div class="scroll-wrapper">
+            <table class="result-table">
+                <tr>
+                    <td>MC_ZALUPA</td>
+                    <td>5</td>
+                    <td>17</td>
+                    <td>22</td>
+                    <td>169</td>
+                    <td>169</td>
+                    <td>169</td>
+                    <td>169</td>
+                    <td>169</td>
+                </tr>
+                <tr>
+                    <td>Centro</td>
+                    <td>122</td>
+                    <td>47</td>
+                    <td>169</td>
+                    <td>169</td>
+                    <td>169</td>
+                    <td>169</td>
+                    <td>169</td>
+                    <td>170</td>
+                </tr>
+                <tr>
+                    <td>Centro</td>
+                    <td>122</td>
+                    <td>47</td>
+                    <td>169</td>
+                    <td>169</td>
+                    <td>169</td>
+                    <td>169</td>
+                    <td>172</td>
+                    <td>172</td>
+                </tr>
+            </table>
+            </div>
+        </div>
+        <button class="button" type="button" onclick="returnToLobby(); return false;">Return To Lobby</button>
     </div>
 </div>
 </body>

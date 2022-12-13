@@ -10,6 +10,10 @@ ol{
     list-style-type: none;
 }
 
+#auth-screen, #lobby-screen, #create-and-connect-game-screen2, #game-screen {
+    display: none;
+}
+
 textarea:focus, input:focus{
     outline: none;
 }
@@ -235,6 +239,53 @@ textarea:focus, input:focus{
 .lobby-tab-content span{
     font-size: 25px;
     flex-grow: 1;
+}
+
+.result-block-header {
+    text-align: center;
+}
+
+
+.result-block-header span {
+    font-family: 'Fredoka One', sans-serif;
+    font-size: 40px;
+}
+
+.result-block.form-block{
+    padding: 10px 20px 20px 20px;
+    min-width: 360px;
+    width: auto;
+    max-width: 98vw;
+    box-sizing: border-box;
+
+}
+
+.scroll-wrapper {
+    overflow: scroll;
+}
+
+.result-table {
+    margin-top: 10px;
+    font-size: 20px;
+    border:none;
+    border-collapse: collapse;
+}
+
+.result-table td {
+    width: 50px;
+    min-width: 50px;
+    text-align: center;
+}
+
+.result-table tr td:first-child{
+    border-right: 1px solid white;
+    padding-right: 10px;
+}
+
+.result-table tr td:last-child{
+    border-left: 1px solid white;
+    font-weight: bold;
+    padding-left: 4px;
 }
 
 
