@@ -20,14 +20,14 @@
                     <p>NO THANKS!</p>
                 </div>
                 <div class="form-block your-name">
-                    <label class="label" for="regName">Привет, введи свое имя</label>
+                    <label class="label" for="regName">Hi, print your name</label>
                     <input class="input" type="text" id="regName" name="regName" autofocus>
                     <button class="button ok-button" type="button" onclick="auth(); return false;">OK</button>
                 </div>
             </div>
         </div>
     </div>
-    <div id="create-and-connect-game-screen2">
+    <div id="create-and-connect-game-screen">
         <div class="outer-border">
             <div id="main-block">
                 <div class="logo middle-logo">
@@ -39,7 +39,7 @@
                         <button class="button create-game-button" type="button" onclick="createGame(); return false;">Create Game</button>
                     </form>
                     <form class="connect-form">
-                        <input class="input invite-code-input" type="text" id="inviteCode" name="inviteCode" maxlength="6">
+                        <input class="input invite-code-input" type="text" id="inviteCode" name="inviteCode" maxlength="5">
                         <button class="button connect-game-button" type="button" onclick="connectGame(); return false;">Connect</button>
                     </form>
                 </div>
@@ -59,10 +59,6 @@
                             <span>Players <span id="players-count">1</span>/<span id="max-players-count">10</span></span>
                         </div>
                         <ol id="players-list" class="players-ol">
-                            <li class="players-li">
-                                <div class="player-ava-block"></div>
-                                <span class="nickname">MC_ZALUPA</span>
-                            </li>
                         </ol>
                     </div>
                     <div class="lobby-control-block">
@@ -94,7 +90,6 @@
         </div>
     </div>
     <div id="game-screen">
-        <div class="center-block">
             <div class="current-card-block">
                 <span id="current-card">-1</span>
                 <span id="current-card-coins">0</span>
@@ -111,7 +106,6 @@
                 <button class="button" id="put-coin" type="button" onclick="putCoin(); return false;">Put Coin</button>
                 <button class="button" id="take-card" type="button" onclick="takeCard(); return false;">Take Card</button>
             </div>
-        </div>
     </div>
     <div id="result-screen">
         <div class="logo little-logo">
@@ -125,35 +119,12 @@
                 <tr>
                     <td>MC_ZALUPA</td>
                     <td>5</td>
-                    <td>17</td>
-                    <td>22</td>
-                    <td>169</td>
-                    <td>169</td>
-                    <td>169</td>
-                    <td>169</td>
                     <td>169</td>
                 </tr>
                 <tr>
                     <td>Centro</td>
                     <td>122</td>
-                    <td>47</td>
-                    <td>169</td>
-                    <td>169</td>
-                    <td>169</td>
-                    <td>169</td>
-                    <td>169</td>
                     <td>170</td>
-                </tr>
-                <tr>
-                    <td>Centro</td>
-                    <td>122</td>
-                    <td>47</td>
-                    <td>169</td>
-                    <td>169</td>
-                    <td>169</td>
-                    <td>169</td>
-                    <td>172</td>
-                    <td>172</td>
                 </tr>
             </table>
             </div>

@@ -43,3 +43,28 @@
     top: -45px;
     width: 91px;
 }
+
+@media screen and (max-width: 500px) {
+    .logo {
+        width: 247px;
+        padding-top: 0;
+    }
+
+    .logo-img{
+        left: -49px;
+        top: -45px;
+        width: 91px;
+    }
+
+    .logo p{
+        font-size: 40px;
+    }
+
+    .middle-logo{
+        width: 247px;
+    }
+
+    .middle-logo p{
+        font-size: 40px;
+    }
+}
