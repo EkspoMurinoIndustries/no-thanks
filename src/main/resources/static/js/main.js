@@ -105,6 +105,10 @@ function processTopicMessage(message) {
         if (message['playerNumber'] === myNumber) {
             let coins = parseInt(currentPlayerCoins.html())
             coins -= 1
+            if (coins === 0) {
+                //Потом в render.js перенесу когда тут остальное в порядок приведу. Чтобы не забыть как disable ставить в jQuery
+                putCoinButton.prop("disabled", true)
+            }
             currentPlayerCoins.html(coins)
         }
         currentCardCoinsBlock.html(message['currentCardCoins'])

@@ -12,6 +12,8 @@ let currentPlayerCoins = $('#coins-count')
 let currentPlayerCards = $('#player-cards')
 let currentCardBlock = $('#current-card')
 let currentCardCoinsBlock = $('#current-card-coins')
+let putCoinButton = $('#put-coin')
+let takeCardButton = $('#take-card')
 
 let playerNumbersToNames = new Map
 
@@ -80,9 +82,11 @@ function renderGameScreen(playersList, currentCard, currentPlayerNumber) {
 
 function renderPlayButtons(currentPlayerNumber) {
     if (currentPlayerNumber === myNumber) {
-        $('.game-button').show()
+        putCoinButton.show()
+        takeCardButton.show()
     } else {
-        $('.game-button').hide()
+        putCoinButton.hide()
+        takeCardButton.hide()
     }
 }
 
