@@ -14,11 +14,13 @@ let currentCardBlock = $('#current-card')
 let currentCardCoinsBlock = $('#current-card-coins')
 let putCoinButton = $('#put-coin')
 let takeCardButton = $('#take-card')
+let errorMessage = $('#error-message')
 
 let playerNumbersToNames = new Map
 
 function renderAuthAndCreateConnectScreen() {
     let cookies = parseCookie()
+    errorMessage.hide();
     if (cookies['no-thanks-name'] === undefined || cookies['no-thanks-token'] === undefined) {
         renderAuthScreen()
     } else {
@@ -107,4 +109,10 @@ function renderSingleGamePlayer(item) {
         currentPlayerCoins.html(item.coins)
         currentPlayerCards.html(playerCards)
     }
+}
+function closeErrorMessage(){
+    errorMessage.hide();
+}
+function showErrorMessage(){
+    errorMessage.show();
 }

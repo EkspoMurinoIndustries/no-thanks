@@ -1,4 +1,4 @@
-*{
+* {
     padding: 0;
     margin: 0;
     border: none;
@@ -6,15 +6,15 @@
     color: white;
 }
 
-ol{
+ol {
     list-style-type: none;
 }
 
-textarea:focus, input:focus{
+textarea:focus, input:focus {
     outline: none;
 }
 
-#create-and-connect-game-screen, #result-screen{
+#create-and-connect-game-screen, #result-screen {
     display: none;
 }
 
@@ -27,9 +27,8 @@ textarea:focus, input:focus{
 }
 
 .form-block {
-    background:
-            linear-gradient(155deg, #765ddd, #5790fb) padding-box,
-            linear-gradient(to bottom right, #a995ff, #607af5) border-box;
+    background: linear-gradient(155deg, #765ddd, #5790fb) padding-box,
+    linear-gradient(to bottom right, #a995ff, #607af5) border-box;
     border: 4px solid transparent;
     border-radius: 26px;
     margin: 40px auto;
@@ -40,17 +39,16 @@ textarea:focus, input:focus{
     box-sizing: border-box;
 }
 
-.label{
+.label {
     display: block;
     text-align: center;
     text-transform: uppercase;
     font-size: 24px;
 }
 
-.input{
-    background:
-            linear-gradient(to right, #8f9af5, #8f9af5) padding-box,
-            linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
+.input {
+    background: linear-gradient(to right, #8f9af5, #8f9af5) padding-box,
+    linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
     border: 3px solid transparent;
     border-radius: 10px;
     max-width: 70%;
@@ -62,13 +60,12 @@ textarea:focus, input:focus{
     display: block;
 }
 
-.button{
+.button {
     display: block;
     height: 50px;
     color: #502d9b;
-    background:
-            linear-gradient(to right, white, white) padding-box,
-            linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
+    background: linear-gradient(to right, white, white) padding-box,
+    linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
     border: 3px solid transparent;
     border-radius: 10px;
     font-size: 30px;
@@ -78,25 +75,24 @@ textarea:focus, input:focus{
     padding: 0 20px;
 }
 
-.button:hover{
+.button:hover {
     color: white;
-    background:
-            linear-gradient(to right, #502d9b, #502d9b) padding-box,
-            linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
+    background: linear-gradient(to right, #502d9b, #502d9b) padding-box,
+    linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
 }
 
 .button:disabled,
 .button[disabled] {
-    background: linear-gradient(to right, #d8d8d8, #d8d8d8)padding-box, linear-gradient(to bottom, #808080, #727272) border-box;
+    background: linear-gradient(to right, #d8d8d8, #d8d8d8) padding-box, linear-gradient(to bottom, #808080, #727272) border-box;
     color: #959595;
     box-shadow: none;
 }
 
-.ok-button{
+.ok-button {
     margin-top: 30px;
 }
 
-.invite-code-input{
+.invite-code-input {
     text-transform: uppercase;
     text-align: center;
     width: 200px;
@@ -106,7 +102,7 @@ textarea:focus, input:focus{
     margin-top: 30px;
 }
 
-.lobby-grid{
+.lobby-grid {
     margin-top: 20px;
     margin-bottom: 10px;
     display: flex;
@@ -115,17 +111,17 @@ textarea:focus, input:focus{
     gap: 20px;
 }
 
-.lobby-grid > div{
+.lobby-grid > div {
     flex: 1;
 }
 
-.players-block{
+.players-block {
     padding: 10px 20px;
     margin: 0;
     max-width: 380px;
 }
 
-.players-count-block{
+.players-count-block {
     text-align: center;
 }
 
@@ -137,18 +133,17 @@ textarea:focus, input:focus{
 
 .players-li {
     height: 60px;
-    background:
-            linear-gradient(to right, #6d6de6, #6d6de6) padding-box,
-            linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
+    background: linear-gradient(to right, #6d6de6, #6d6de6) padding-box,
+    linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
     border: 2px solid transparent;
     border-radius: 35px 10px 10px 35px;
     vertical-align: middle;
     margin-bottom: 7px
 }
+
 .players-li.current-player {
-    background:
-            linear-gradient(to right, #8f9af5, #8f9af5) padding-box,
-            linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
+    background: linear-gradient(to right, #8f9af5, #8f9af5) padding-box,
+    linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
 }
 
 .players-ol {
@@ -164,7 +159,7 @@ textarea:focus, input:focus{
     margin: 5px;
 }
 
-.nickname{
+.nickname {
     line-height: 59px;
     margin-left: 10px;
 }
@@ -179,8 +174,7 @@ textarea:focus, input:focus{
 }
 
 
-
-.invite-code-block{
+.invite-code-block {
     font-size: 25px;
     flex-grow: 1;
 }
@@ -201,7 +195,7 @@ textarea:focus, input:focus{
 
 .result-table {
     font-size: 20px;
-    border:none;
+    border: none;
     border-collapse: collapse;
     margin: 10px auto auto;
 }
@@ -212,15 +206,98 @@ textarea:focus, input:focus{
     text-align: center;
 }
 
-.result-table tr td:first-child{
+.result-table tr td:first-child {
     border-right: 1px solid white;
     padding-right: 10px;
 }
 
-.result-table tr td:last-child{
+.result-table tr td:last-child {
     border-left: 1px solid white;
     font-weight: bold;
     padding-left: 4px;
 }
+
+.error-message {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-align: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 9999;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.error-message:before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, .5);
+
+}
+
+.error-message--appeared {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+    opacity: 1;
+    background: linear-gradient(174.61deg, #FF5353 -29.46%, #FF9680 94.92%);
+    border-radius: 26px;
+}
+
+.error-message-box {
+    position: relative;
+    -webkit-transition: all .25s;
+    -o-transition: all .25s;
+    transition: all .25s;
+    background: #fff;
+    max-width: 100%;
+    max-height: 90vh;
+    min-height: 150px;
+    min-width: 300px;
+    overflow: auto;
+
+    box-sizing: border-box;
+    width: 35vw;
+    height: 200px;
+
+    background: linear-gradient(174.61deg, #FF5353 -29.46%, #FF9680 94.92%) padding-box,
+    linear-gradient(138.05deg, #FF9595, #F68F7800, #FFEFB766) border-box;
+    border: 4px solid transparent;
+    border-radius: inherit;
+
+    justify-content: center;
+}
+
+.error-message-text {
+    height: 45px;
+    font-size: 30px;
+    margin-top: 30px;
+    text-align: center;
+}
+
+.error-message-text img {
+    height: 45px;
+    width: 45px;
+    margin-right: 10px;
+}
+
+.error-message-text span {
+    display: inline-block;
+    position: relative;
+    bottom: 7px;
+}
+
+
+
 
 
