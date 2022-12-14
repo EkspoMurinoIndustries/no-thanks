@@ -121,7 +121,7 @@ function processTopicMessage(message) {
 function processDirectMessage(message) {
     console.log("Direct message: " + JSON.stringify(message))
     if (message['type'] === "ErrorMessage") {
-        alert(message['message'])
+        showErrorMessage(message['message']);
     }
 
 }
@@ -150,3 +150,4 @@ function parseCookie() {
             return acc;
         }, {});
 }
+
