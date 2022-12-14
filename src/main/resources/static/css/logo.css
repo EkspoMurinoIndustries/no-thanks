@@ -67,4 +67,10 @@
     .middle-logo p{
         font-size: 40px;
     }
+
+}
+@media screen and (max-width: 739px) {
+    .hide-for-phone {
+        display: none;
+    }
 }

@@ -14,8 +14,12 @@ textarea:focus, input:focus{
     outline: none;
 }
 
+#create-and-connect-game-screen, #result-screen{
+    display: none;
+}
+
 .background {
-    height: 100vh;
+    min-height: 100vh;
     width: 100%;
     background: radial-gradient(330% 262% at 31% -33%, rgba(204, 0, 255, 0.3) 0%, rgba(75, 8, 216, 0.2) 33%, rgba(37, 216, 255, 0) 100%), #68AEFF;
     display: grid;
@@ -103,9 +107,12 @@ textarea:focus, input:focus{
 }
 
 .lobby-grid{
-    height: 500px;
     margin-top: 20px;
+    margin-bottom: 10px;
     display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
 }
 
 .lobby-grid > div{
@@ -113,8 +120,8 @@ textarea:focus, input:focus{
 }
 
 .players-block{
-    padding: 30px 20px;
-    margin: 0 40px 0 0;
+    padding: 10px 20px;
+    margin: 0;
     max-width: 380px;
 }
 
@@ -145,7 +152,7 @@ textarea:focus, input:focus{
 }
 
 .players-ol {
-    padding-top: 20px;
+    padding-top: 10px;
 }
 
 .player-ava-block {
@@ -165,69 +172,15 @@ textarea:focus, input:focus{
 .lobby-control-block {
     margin: 0 auto;
     position: relative;
-    width: 360px;
-}
-.tabs {
-    position: relative;
-}
-.tabs::before,
-.tabs::after {
-    content: "";
-    display: table;
-}
-.tabs::after {
-    clear: both;
-}
-.tab {
-    float: left;
-    width: 50%;
-}
-.tab-switch {
-    display: none;
-}
-.tab-label {
-    text-align: center;
-    position: relative;
-    display: block;
-    line-height: 36px;
-    cursor: pointer;
-    top: 0;
-    border: 4px solid #a995ff;
-    background-color: #6e6be6;
-    border-radius: 26px 26px 0 0;
-}
-
-.tab-content {
-    height: 450px;
-    width: 100%;
-    position: absolute;
-    z-index: 1;
-    left: 0;
-    opacity: 0;
-    background:
-            linear-gradient(to bottom, #765ddd, #5790fb) padding-box,
-            linear-gradient(to bottom, #a995ff, #607af5) border-box;
-    border: 4px solid transparent;
-    border-top: 0;
-    border-radius: 0 0 26px 26px;
-    box-sizing: border-box;
-    padding: 20px;
+    max-width: 380px;
     display: flex;
     flex-direction: column;
+    gap: 10px;
 }
 
-.tab-switch:checked + .tab-label {
-    border-bottom: 0;
-    background-color: #765ddd;
-    height: 40px;
-    z-index: 1;
-}
-.tab-switch:checked + label + .tab-content {
-    z-index: 2;
-    opacity: 1;
-}
 
-.lobby-tab-content span{
+
+.invite-code-block{
     font-size: 25px;
     flex-grow: 1;
 }
@@ -269,6 +222,5 @@ textarea:focus, input:focus{
     font-weight: bold;
     padding-left: 4px;
 }
-
 
 

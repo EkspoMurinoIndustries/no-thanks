@@ -49,7 +49,7 @@
     <div id="lobby-screen">
         <div class="outer-border">
             <div id="lobby-block">
-                <div class="logo little-logo">
+                <div class="logo little-logo hide-for-phone">
                     <img src="img/hand_logo.png" class="logo-img" alt="NT">
                     <p>NO THANKS!</p>
                 </div>
@@ -61,29 +61,11 @@
                         <ol id="players-list" class="players-ol">
                         </ol>
                     </div>
-                    <div class="lobby-control-block">
-                        <div class="tab">
-                            <input type="radio" name="css-tabs" id="tab-1" checked class="tab-switch">
-                            <label for="tab-1" class="tab-label">Lobby</label>
-                            <div class="tab-content lobby-tab-content">
-                                <span>Invite code: <span id="invite-code"></span></span>
-                                <button class="button" id="start-game-button" type="button" onclick="startGame(); return false;">Start Game</button>
-                            </div>
+                    <div class="form-block lobby-control-block">
+                        <div class="invite-code-block">
+                            <span>Invite code: <span id="invite-code"></span></span>
                         </div>
-                        <div class="tab">
-                            <input type="radio" name="css-tabs" id="tab-2" class="tab-switch">
-                            <label for="tab-2" class="tab-label">Properties</label>
-                            <div class="tab-content">
-                                <div class="prop-block">
-                                    <label for="max-number-of-players-prop">Max number of players:</label>
-                                    <input id="max-number-of-players-prop" class="props-input" type="number" name="regName">
-                                </div>
-                                <div class="prop-block">
-                                    <label for="extra-card-prop">Max number of players:</label>
-                                    <input id="extra-card-prop" class="props-input" type="number" name="regName">
-                                </div>
-                            </div>
-                        </div>
+                        <button class="button" id="start-game-button" type="button" onclick="startGame(); return false;">Start Game</button>
                     </div>
                 </div>
             </div>

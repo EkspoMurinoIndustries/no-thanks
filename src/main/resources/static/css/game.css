@@ -59,6 +59,7 @@
     max-height: 39vh;
     margin: 30px auto;
     overflow: scroll;
+    overflow-x: hidden;
 }
 
 .game-players-block{
