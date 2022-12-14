@@ -1,5 +1,6 @@
 package org.expo.nothanks.model
 
+import org.expo.nothanks.model.lobby.Params
 import java.util.*
 
 data class UserConnectedResponse(
@@ -8,7 +9,8 @@ data class UserConnectedResponse(
     val allPlayers: List<SafeLobbyPlayer>,
     val isCreator: Boolean = false,
     val playerNumber: Int,
-    val gameStatus: GameStatus? = null
+    val gameStatus: GameStatus? = null,
+    val params: Params
 )
 
 data class SafeLobbyPlayer(

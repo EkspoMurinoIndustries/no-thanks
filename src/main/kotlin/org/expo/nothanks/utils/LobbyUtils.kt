@@ -140,6 +140,9 @@ fun Lobby.finishRound() {
 
 fun Lobby.addPlayer(playerId: UUID, name: String) {
     if (!this.players.containsKey(playerId)) {
+        if (players.size >= params.maxPlayerNumber) {
+            throw PlayerException("Lobby is Filled", gameId, playerId)
+        }
         this.players[playerId] = LobbyPlayer(
             id = playerId,
             number = this.players.values.maxOfOrNull { it.number }?.plus(1) ?: 0,
