@@ -13,6 +13,7 @@ fun Game.takeCard(playerId: UUID) {
         this.checkPlayerCurrent(playerId)
         val currentPlayer = currentPlayer()
         currentPlayer.cards.add(currentCardNumber())
+        currentPlayer.coins += currentCardCoins
         currentCardCoins = 0
         deck.skip += 1
     } else {
@@ -100,7 +101,7 @@ fun Game.checkPlayerCurrent(playerId: UUID) {
     }
 }
 
-fun Game.isRoundEnded(): Boolean = deck.skip > deck.cards.size
+fun Game.isRoundEnded(): Boolean = deck.skip >= deck.cards.size
 
 fun Game.currentPlayer() = currentPlayer
 
