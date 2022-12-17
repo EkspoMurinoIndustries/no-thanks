@@ -62,8 +62,8 @@ class NotificationService(
 
     fun putCoin(lobby: Lobby) {
         messageToTopic(lobby, PutCoinMessage(
-            playerNumber = lobby.getGame().currentPlayerNumber(),
-            newCurrentPlayerNumber = lobby.getGame().previousPlayer().number,
+            newCurrentPlayerNumber = lobby.getGame().currentPlayerNumber(),
+            playerNumber = lobby.getGame().previousPlayer().number,
             currentCardCoins = lobby.getGame().currentCardCoins
         ))
     }
