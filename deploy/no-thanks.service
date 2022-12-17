@@ -1,0 +1,14 @@
+[Unit]
+Description=NoThanks game daemon
+
+[Service]
+WorkingDirectory=/opt/apps
+ExecStart=/bin/java -Xms128m -Xmx512m -jar /opt/apps/no-thanks.jar
+
+User=githubbot
+Type=simple
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
