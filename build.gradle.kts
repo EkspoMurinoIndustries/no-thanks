@@ -11,6 +11,12 @@ group = "com.expo"
 version = "0.0.1-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
+tasks {
+    bootJar {
+        archiveFileName.set("${project.name}.jar")
+    }
+}
+
 repositories {
     mavenCentral()
 }
