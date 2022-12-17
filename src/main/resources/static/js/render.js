@@ -14,7 +14,14 @@ let currentCardBlock = $('#current-card')
 let currentCardCoinsBlock = $('#current-card-coins')
 let putCoinButton = $('#put-coin')
 let takeCardButton = $('#take-card')
-let errorMessage = $('#error-message')
+let errorMessage = $('<div class="error-message" id="error-message">\n' +
+    '    <div class="error-message--appeared">\n' +
+    '        <div class="error-message-box">\n' +
+    '            <div class="error-message-text"><img src="img/error_logo.png" alt=""><br><span id="error-message-text">Oops, mistake</span></div>\n' +
+    '            <button class="button" onclick="closeErrorMessage(); return false;">OK</button>\n' +
+    '        </div>\n' +
+    '    </div>\n' +
+    '</div>')
 
 let playerNumbersToNames = new Map
 
@@ -110,9 +117,17 @@ function renderSingleGamePlayer(item) {
         currentPlayerCards.html(playerCards)
     }
 }
+
 function closeErrorMessage(){
-    errorMessage.hide();
+    errorMessage.remove();
 }
+
 function showErrorMessage(){
-    errorMessage.show();
+    $('body').append(errorMessage);
+    let errorMessageText = $('#error-message-text');
+    if (arguments.length === 0)
+        errorMessageText.text("Oops, mistake");
+    if (arguments.length === 1)
+        errorMessageText.text(arguments[0]);
 }
+

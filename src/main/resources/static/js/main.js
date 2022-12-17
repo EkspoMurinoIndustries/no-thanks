@@ -121,7 +121,7 @@ function processTopicMessage(message) {
 function processDirectMessage(message) {
     console.log("Direct message: " + JSON.stringify(message))
     if (message['type'] === "ErrorMessage") {
-        showErrorMessage();
+        showErrorMessage(message['message']);
     }
 
 }

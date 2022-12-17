@@ -263,7 +263,7 @@ textarea:focus, input:focus {
     max-width: 100%;
     max-height: 90vh;
     min-height: 150px;
-    min-width: 300px;
+    min-width: 350px;
     overflow: auto;
 
     box-sizing: border-box;
@@ -279,22 +279,23 @@ textarea:focus, input:focus {
 }
 
 .error-message-text {
-    height: 45px;
-    font-size: 30px;
-    margin-top: 30px;
+    height: 100px;
+    font-size: 25px;
+    margin-top: 20px;
     text-align: center;
 }
 
 .error-message-text img {
     height: 45px;
     width: 45px;
-    margin-right: 10px;
 }
 
 .error-message-text span {
     display: inline-block;
     position: relative;
     bottom: 7px;
+    margin-bottom: 15px;
+    margin-top: 15px;
 }
 
 
