@@ -83,9 +83,9 @@ function subscribe(gameId) {
 }
 
 function processTopicMessage(message) {
-    console.log("Topic message: " + JSON.stringify(message))
     if (message['type'] === "LobbyConnectedMessage") {
         addPlayerToLobbyList(message['newPlayer'])
+        $('#players-count').html(message['allPlayers'].length)
     }
     if (message['type'] === "RoundStartedMessage") {
         renderGameScreen(message.players, message['currentCard'], message['currentPlayerNumber'])
@@ -119,10 +119,13 @@ function processTopicMessage(message) {
 }
 
 function processDirectMessage(message) {
-    console.log("Direct message: " + JSON.stringify(message))
     if (message['type'] === "ErrorMessage") {
         showErrorMessage(message['message']);
     }
+    if (message['type'] === "PlayerPersonalInfoMessage") {
+        updatePersonalInfo(message.coins, message.cards, message['isCurrentPlayer']);
+    }
+
 
 }
 

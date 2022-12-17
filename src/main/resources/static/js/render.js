@@ -22,6 +22,7 @@ let errorMessage = $('<div class="error-message" id="error-message">\n' +
     '        </div>\n' +
     '    </div>\n' +
     '</div>')
+let gameButtons = $('#game-buttons-block')
 
 let playerNumbersToNames = new Map
 
@@ -48,6 +49,7 @@ function renderLobbyScreen(isCreator, players, lobbyInviteCode) {
     }
     lobbyPlayersList.html('')
     players.forEach(addPlayerToLobbyList)
+    $('#players-count').html(players.length)
 }
 
 function addPlayerToLobbyList(player) {
@@ -74,47 +76,56 @@ function renderCreateAndConnectScreen(name) {
     $('#player-name').html(name)
 }
 
-function renderGameScreen(playersList, currentCard, currentPlayerNumber) {
+function renderGameScreen(playersList, currentCard, activePlayerNumber) {
     createAndConnectScreen.hide()
     authScreen.hide()
     lobbyScreen.hide()
     gameScreen.show()
 
     gamePlayersList.html('')
-    playersList.forEach(renderSingleGamePlayer)
+    playersList.forEach(player => renderSingleGamePlayer(player, activePlayerNumber))
 
     currentCardBlock.html(currentCard)
     currentCardCoinsBlock.html('0')
-    renderPlayButtons(currentPlayerNumber)
+    renderPlayButtons(activePlayerNumber)
 
 }
 
 function renderPlayButtons(currentPlayerNumber) {
     if (currentPlayerNumber === myNumber) {
-        putCoinButton.show()
-        takeCardButton.show()
+        gameButtons.show()
     } else {
-        putCoinButton.hide()
-        takeCardButton.hide()
+        gameButtons.hide()
     }
 }
 
-function renderSingleGamePlayer(item) {
-    let playerClass = item.number === myNumber ? "\"player-card turn\"" : "\"player-card\""
-    let playerCards = item.cards.toString()
-    let playerLi = $("<div class="+playerClass+">\n" +
-        "                    <div class=\"nickname-player-card-block\">\n" +
-        "                        <div class=\"player-ava-block\"></div>\n" +
-        "                        <span class=\"nickname\">"+item.name+"</span>\n" +
-        "                    </div>\n" +
-        "                    <div class=\"status-player-card-block\">\n" +
-        "                        <div class=\"cards-card-block\"><span>"+playerCards+"</span></div>\n" +
-        "                    </div>\n" +
-        "                </div>")
-    gamePlayersList.append(playerLi);
-    if (item.number === myNumber) {
-        currentPlayerCoins.html(item.coins)
+function renderSingleGamePlayer(player, activePlayerNumber) {
+    let playerCards = player.cards.toString()
+    if (player.number === myNumber) {
+        currentPlayerCoins.html(player.coins)
         currentPlayerCards.html(playerCards)
+    } else {
+        let otherPlayerClass = activePlayerNumber === player.number ? "\"player-card turn\"" : "\"player-card\""
+        let otherPlayerDiv = $("<div class="+otherPlayerClass+">\n" +
+            "                 <div class=\"nickname-player-card-block\">\n" +
+            "                     <div class=\"player-ava-block\"></div>\n" +
+            "                     <span class=\"nickname\">"+player.name+"</span>\n" +
+            "                 </div>\n" +
+            "                 <div class=\"status-player-card-block\">\n" +
+            "                     <div class=\"cards-card-block\"><span>"+playerCards+"</span></div>\n" +
+            "                 </div>\n" +
+            "             </div>")
+        gamePlayersList.append(otherPlayerDiv)
+    }
+}
+
+function updatePersonalInfo(coins, cards, isCurrentPlayer) {
+    currentPlayerCoins.html(coins)
+    currentPlayerCards.html(cards.toString())
+    if (isCurrentPlayer) {
+        gameButtons.show()
+    } else {
+        gameButtons.hide()
     }
 }
 
