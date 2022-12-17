@@ -150,4 +150,3 @@ function parseCookie() {
             return acc;
         }, {});
 }
-

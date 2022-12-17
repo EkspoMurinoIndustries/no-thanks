@@ -27,6 +27,7 @@ let playerNumbersToNames = new Map
 
 function renderAuthAndCreateConnectScreen() {
     let cookies = parseCookie()
+    errorMessage.hide();
     if (cookies['no-thanks-name'] === undefined || cookies['no-thanks-token'] === undefined) {
         renderAuthScreen()
     } else {
@@ -116,9 +117,11 @@ function renderSingleGamePlayer(item) {
         currentPlayerCards.html(playerCards)
     }
 }
+
 function closeErrorMessage(){
     errorMessage.remove();
 }
+
 function showErrorMessage(){
     $('body').append(errorMessage);
     let errorMessageText = $('#error-message-text');
@@ -127,3 +130,4 @@ function showErrorMessage(){
     if (arguments.length === 1)
         errorMessageText.text(arguments[0]);
 }
+

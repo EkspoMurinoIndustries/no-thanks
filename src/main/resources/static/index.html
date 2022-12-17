@@ -114,7 +114,14 @@
         <button class="button" type="button" onclick="returnToLobby(); return false;">Return To Lobby</button>
     </div>
 </div>
-
+<div class="error-message" id="error-message">
+    <div class="error-message--appeared">
+        <div class="error-message-box">
+            <div class="error-message-text"><img src="img/error_logo.png" alt=""><span>Oops, mistake</span></div>
+            <button class="button ok-button" onclick="closeErrorMessage(); return false;">OK</button>
+        </div>
+    </div>
+</div>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.js" integrity="sha512-lyIq9fRcCeSCXhp41XC/250UBmypAHV8KW+AhLcSEIksWHBfhzub6XXwDe67wTpOG8zrO2NAU/TYmEaCW+aQSg==" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js" integrity="sha512-iKDtgDyTHjAitUDdLljGhenhPwrbBfqTKWO1mkhSFH3A7blITC9MhYon6SjnMhp4o0rADGw9yAC6EW4t5a4K3g==" crossorigin="anonymous"></script>
