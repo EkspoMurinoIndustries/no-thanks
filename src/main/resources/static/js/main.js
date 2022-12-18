@@ -116,7 +116,7 @@ function processTopicMessage(message) {
         currentCardCoinsBlock.html(message['currentCardCoins'])
     }
     if (message['type'] === "EndRoundMessage") {
-
+        renderEndRoundScreen(message.result)
     }
 }
 
@@ -154,4 +154,12 @@ function parseCookie() {
             acc[decodeURIComponent(v[0].trim())] = decodeURIComponent(v[1].trim());
             return acc;
         }, {});
+}
+
+function returnToLobby() {
+    lobbyScreen.show()
+    createAndConnectScreen.hide()
+    authScreen.hide()
+    gameScreen.hide()
+    $('#result-screen').hide()
 }

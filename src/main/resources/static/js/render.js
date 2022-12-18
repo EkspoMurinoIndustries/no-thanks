@@ -80,6 +80,7 @@ function renderGameScreen(playersList, currentCard, activePlayerNumber) {
     authScreen.hide()
     lobbyScreen.hide()
     gameScreen.show()
+    $('#result-screen').hide()
 
     gamePlayersList.html('')
     playersList.forEach(player => renderSingleGamePlayer(player, activePlayerNumber))
@@ -142,3 +143,22 @@ function showErrorMessage(){
         errorMessageText.text(arguments[0]);
 }
 
+function renderEndRoundScreen(results) {
+    createAndConnectScreen.hide()
+    authScreen.hide()
+    lobbyScreen.hide()
+    gameScreen.hide()
+    $('#result-table').html('')
+    $('#result-screen').show()
+    Object.values(results).forEach(addResultRow)
+}
+
+function addResultRow(playerResultValue) {
+    let roundScores = ""
+    playerResultValue.rounds.forEach(roundScore => roundScores+=("<td>"+roundScore+"</td>"))
+    $('#result-table').append("<tr>\n" +
+        "                    <td>"+playerResultValue['playerName']+"</td>\n" +
+                            roundScores +
+        "                    <td>"+playerResultValue['totalScore']+"</td>\n" +
+        "                </tr>")
+}
