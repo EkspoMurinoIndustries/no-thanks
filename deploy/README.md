@@ -110,3 +110,50 @@ We use a simple systemd daemon to run the application on the server, as a way to
     $ chown -R <username>:<username> /home/<username>/.ssh
     ```
 Now the private key can be used to gain access to the server as a <username> user.
+
+## Setup [NGINX](https://www.nginx.com/) proxy and [certbot](https://certbot.eff.org/instructions?ws=nginx&os=ubuntufocal) to enable HTTPS
+
+1. Login as root user to the server via ssh: 
+    ```
+    $ ssh root@<ip-address>
+    root@<ip-address>'s password:
+    ```
+2. Install [NGINX](https://www.nginx.com/) proxy server:
+    ```bash
+    $ sudo apt update
+    $ sudo apt install nginx
+    ```
+3. Install certbot
+    ```bash
+    $ sudo apt install snapd
+    $ sudo snap install --classic certbot
+    ```
+4. Get SSL certificates for your domain:
+    ```bash
+    $ sudo ln -s /snap/bin/certbot /usr/bin/certbot
+    $ sudo certbot certonly --nginx
+    ```
+5. Remove default NGINX configuration:
+    ```bash
+    $ rm -rf /etc/nginx/sites-enabled/*
+    $ rm -rf /etc/nginx/sites-available/*
+    ```
+6. Install NGINX configs to server:
+    ```bash
+    # from your machine
+    $ rsync -r ./deploy/nginx/* root@<ip-address>:/etc/nginx/sites-available/
+    ```
+7. Add configs to NGINX configuration:
+    ```bash
+    # on server
+    $ ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
+    $ ln -s /etc/nginx/sites-available/no-thanks.conf /etc/nginx/sites-enabled/no-thanks.conf
+    ```
+8. Generate SSL certificate for default server:
+    ```bash
+    $ openssl req -nodes -new -x509 -subj "/CN=localhost" -keyout /etc/nginx/ssl/default.key -out /etc/nginx/ssl/default.crt
+    ```
+9. Reload NGINX to apply new configuration:
+    ```bash
+    $ nginx -s reload
+    ```
