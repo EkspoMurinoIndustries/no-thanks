@@ -28,7 +28,6 @@ let playerNumbersToNames = new Map
 
 function renderAuthAndCreateConnectScreen() {
     let cookies = parseCookie()
-    errorMessage.hide();
     if (cookies['no-thanks-name'] === undefined || cookies['no-thanks-token'] === undefined) {
         renderAuthScreen()
     } else {
