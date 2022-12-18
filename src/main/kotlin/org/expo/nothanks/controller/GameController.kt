@@ -60,11 +60,11 @@ class GameController(
                 }
             } else {
                 gamesService.takeCard(gameId, playerId) {
-                    if (it.getGame().isRoundEnded()) {
-                        notificationService.endRound(it)
-                    } else {
+                    if (it.isGameStarted()) {
                         notificationService.takeCard(it)
                         notificationService.updateInfo(it)
+                    } else {
+                        notificationService.endRound(it)
                     }
                 }
             }
