@@ -96,6 +96,8 @@ function processTopicMessage(message) {
             let cardCoins = parseInt(currentCardCoinsBlock.html())
             coins += cardCoins
             currentPlayerCoins.html(coins)
+        } else {
+            $('#' + 'other-player-card-block' + message['playerNumber']).append(message['takenCard']+',')
         }
         currentCardCoinsBlock.html('0')
         currentCardBlock.html(message['newCardNumber'])

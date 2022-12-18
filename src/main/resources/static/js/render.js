@@ -105,13 +105,14 @@ function renderSingleGamePlayer(player, activePlayerNumber) {
         currentPlayerCards.html(playerCards)
     } else {
         let otherPlayerClass = activePlayerNumber === player.number ? "\"player-card turn\"" : "\"player-card\""
+        let otherPlayerCardsBlockId = "\"other-player-card-block"+player.number+"\""
         let otherPlayerDiv = $("<div class="+otherPlayerClass+">\n" +
             "                 <div class=\"nickname-player-card-block\">\n" +
             "                     <div class=\"player-ava-block\"></div>\n" +
             "                     <span class=\"nickname\">"+player.name+"</span>\n" +
             "                 </div>\n" +
             "                 <div class=\"status-player-card-block\">\n" +
-            "                     <div class=\"cards-card-block\"><span>"+playerCards+"</span></div>\n" +
+            "                     <div class=\"cards-card-block\" id="+otherPlayerCardsBlockId+"><span>"+playerCards+"</span></div>\n" +
             "                 </div>\n" +
             "             </div>")
         gamePlayersList.append(otherPlayerDiv)
