@@ -39,12 +39,12 @@ class GameController(
                     notificationService.gameStarted(it)
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: NoThanksException) {
             logger.error("startNewRound error", e)
             notificationService.sendErrorToUser(
                 gameId,
                 principal.getPlayerId(),
-                e.message ?: "Unexpected error"
+                e.publicMessage
             )
         }
     }
@@ -60,11 +60,11 @@ class GameController(
                 }
             } else {
                 gamesService.takeCard(gameId, playerId) {
-                    if (!it.getGame().isRoundEnded()) {
-                        notificationService.endRound(it)
-                    } else {
+                    if (it.isGameStarted()) {
                         notificationService.takeCard(it)
                         notificationService.updateInfo(it)
+                    } else {
+                        notificationService.endRound(it)
                     }
                 }
             }

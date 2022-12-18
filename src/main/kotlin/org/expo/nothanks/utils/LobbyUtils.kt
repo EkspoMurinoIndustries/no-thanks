@@ -1,5 +1,7 @@
 package org.expo.nothanks.utils
 
+import org.expo.nothanks.exception.GameException
+import org.expo.nothanks.exception.PlayerException
 import org.expo.nothanks.model.GameStatus
 import org.expo.nothanks.model.SafeLobbyPlayer
 import org.expo.nothanks.model.event.input.NewParams
@@ -22,7 +24,7 @@ fun Lobby.connectPlayer(playerId: UUID) {
             game!!.continueGame()
         }
     } else if (!players.values.any { it.id == playerId }) {
-        throw IllegalStateException("Impossible to connect player to this game")
+        throw PlayerException("Impossible to connect player to this game", gameId, playerId)
     }
 }
 
@@ -63,11 +65,10 @@ fun Lobby.getSafeLobbyPlayers(): List<SafeLobbyPlayer> {
 
 fun Lobby.disconnectPlayer(playerId: UUID) {
     if (!players.values.any { it.id == playerId }) {
-        throw IllegalStateException("Impossible to disconnect player from this game")
+        throw PlayerException("Impossible to disconnect player from this game", gameId, playerId)
     }
 
     if (isGameStarted()) {
-        pause()
         disconnectedPLayers.add(playerId)
     } else {
         removePlayer(playerId)
@@ -81,12 +82,15 @@ fun Lobby.pause() {
 }
 
 fun Lobby.startGame() {
+    if (players.size < 2) {
+        throw GameException("Sorry, you can't play one", gameId)
+    }
     game = createGame()
 }
 
 fun Lobby.getGame(): Game {
     if (game == null) {
-        throw IllegalStateException("Game has not been started")
+        throw GameException("Game has not been started", gameId)
     }
     return game!!
 }
@@ -109,7 +113,7 @@ fun Lobby.getPlayerInLobby(playerId: UUID): SafeLobbyPlayer {
             number = it.number,
             score = it.score
         )
-    } ?: throw IllegalStateException("Player has not been found")
+    } ?: throw PlayerException("Player has not been found", gameId, playerId)
 }
 
 fun Lobby.getPlayersInLobby(): List<SafeLobbyPlayer> {
@@ -125,7 +129,7 @@ fun Lobby.getPlayersInLobby(): List<SafeLobbyPlayer> {
 
 fun Lobby.finishRound() {
     if (game == null) {
-        throw IllegalStateException("Game has not been started")
+        throw GameException("Game has not been started", gameId)
     }
     val result = game!!.calculateResult()
     result.forEach { (playerId, playerResult) ->
@@ -136,6 +140,9 @@ fun Lobby.finishRound() {
 
 fun Lobby.addPlayer(playerId: UUID, name: String) {
     if (!this.players.containsKey(playerId)) {
+        if (players.size >= params.maxPlayerNumber) {
+            throw PlayerException("Lobby is Filled", gameId, playerId)
+        }
         this.players[playerId] = LobbyPlayer(
             id = playerId,
             number = this.players.values.maxOfOrNull { it.number }?.plus(1) ?: 0,

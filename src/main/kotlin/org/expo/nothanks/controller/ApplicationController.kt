@@ -50,7 +50,8 @@ class ApplicationController(
                 isCreator = lobby.creator == token,
                 allPlayers = lobby.getSafeLobbyPlayers(),
                 playerNumber = lobby.players[token]!!.number,
-                gameStatus = lobby.gameStatusOrNull(token)
+                gameStatus = lobby.gameStatusOrNull(token),
+                params = lobby.params
             )
         }
         return response

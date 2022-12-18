@@ -1,0 +1,76 @@
+.logo {
+    position: relative;
+    padding-top: 80px;
+    width: 500px;
+    margin: auto;
+}
+
+.logo-img{
+    box-sizing: border-box;
+    position: absolute;
+    left: -96px;
+    top:-1px;
+    transform: rotate(350deg);
+    width: 160px;
+}
+
+.logo p{
+    font-family: 'Fredoka One', sans-serif;
+    font-size: 80px;
+    color: white;
+    text-shadow: 0 5px 0 rgba(0, 0, 0, 0.55);
+}
+
+.middle-logo{
+    width: 370px;
+}
+
+.middle-logo p{
+    font-size: 60px;
+}
+
+.little-logo{
+    width: 247px;
+    padding-top: 0;
+}
+
+.little-logo p{
+    font-size: 40px;
+}
+
+.little-logo .logo-img{
+    left: -49px;
+    top: -45px;
+    width: 91px;
+}
+
+@media screen and (max-width: 500px) {
+    .logo {
+        width: 247px;
+        padding-top: 0;
+    }
+
+    .logo-img{
+        left: -49px;
+        top: -45px;
+        width: 91px;
+    }
+
+    .logo p{
+        font-size: 40px;
+    }
+
+    .middle-logo{
+        width: 247px;
+    }
+
+    .middle-logo p{
+        font-size: 40px;
+    }
+
+}
+@media screen and (max-width: 739px) {
+    .hide-for-phone {
+        display: none;
+    }
+}

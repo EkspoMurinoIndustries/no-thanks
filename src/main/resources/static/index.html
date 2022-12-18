@@ -2,41 +2,112 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>No Thanks</title>
+    <link href = "fonts/gotham/style.css" rel = "stylesheet" type = "text/css" />
+    <link href='https://fonts.googleapis.com/css?family=Fredoka One' rel='stylesheet'>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/logo.css">
+    <link rel="stylesheet" href="css/game.css">
 </head>
 <body>
-<div id="player-info">
-    <p>Your name: <span id="player-name"></span></p>
-</div>
-<div id="auth">
-    <p>Sign up</p>
-    <label for="regName">Name:</label><br>
-    <input type="text" id="regName" name="regName"><br><br>
-    <button type="button" onclick="auth(); return false;">Sign in</button>
-</div>
-<hr>
-<div id="main">
-    <form>
-        <p>Create game</p>
-        <button type="button" onclick="createGame(); return false;">Create</button>
-    </form>
-    <hr>
-    <form>
-        <p>Connect to game</p>
-        <label for="inviteCode">Invite Code:</label><br>
-        <input type="text" id="inviteCode" name="inviteCode"><br>
-        <button type="button" onclick="connectGame(); return false;">Connect</button>
-    </form>
-</div>
-<div id="lobby">
-    <p>Players:</p>
-    <ol id="players-list">
-    </ol>
-    <button id="start-game-button" type="button" onclick="startGame(); return false;">Start</button>
+<div class="background">
+    <div id="auth-screen">
+        <div class="outer-border">
+            <div id="auth-block">
+                <div class="logo">
+                    <img src="img/hand_logo.png" class="logo-img" alt="NT">
+                    <p>NO THANKS!</p>
+                </div>
+                <div class="form-block your-name">
+                    <label class="label" for="regName">Hi, print your name</label>
+                    <input class="input" type="text" id="regName" name="regName" autofocus>
+                    <button class="button ok-button" type="button" onclick="auth(); return false;">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="create-and-connect-game-screen">
+        <div class="outer-border">
+            <div id="main-block">
+                <div class="logo middle-logo">
+                    <img src="img/hand_logo.png" class="logo-img" alt="NT">
+                    <p>NO THANKS!</p>
+                </div>
+                <div class="form-block create-game">
+                    <form>
+                        <button class="button create-game-button" type="button" onclick="createGame(); return false;">Create Game</button>
+                    </form>
+                    <form class="connect-form">
+                        <input class="input invite-code-input" type="text" id="inviteCode" name="inviteCode" maxlength="5">
+                        <button class="button connect-game-button" type="button" onclick="connectGame(); return false;">Connect</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="lobby-screen">
+        <div class="outer-border">
+            <div id="lobby-block">
+                <div class="logo little-logo hide-for-phone">
+                    <img src="img/hand_logo.png" class="logo-img" alt="NT">
+                    <p>NO THANKS!</p>
+                </div>
+                <div class="lobby-grid">
+                    <div class="form-block players-block">
+                        <div class="players-count-block">
+                            <span>Players <span id="players-count">1</span>/<span id="max-players-count">10</span></span>
+                        </div>
+                        <ol id="players-list" class="players-ol">
+                        </ol>
+                    </div>
+                    <div class="form-block lobby-control-block">
+                        <div class="invite-code-block">
+                            <span>Invite code: <span id="invite-code"></span></span>
+                        </div>
+                        <button class="button" id="start-game-button" type="button" onclick="startGame(); return false;">Start Game</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="game-screen">
+            <div class="current-card-block">
+                <span id="current-card">-1</span>
+                <span id="current-card-coins">0</span>
+            </div>
+            <div class="player-status-block">
+                <div class="own-player-card">
+                    <div class="coins-card-block"><span id="coins-count">-1</span></div>
+                    <div class="cards-card-block"><span id="player-cards"></span></div>
+                </div>
+            </div>
+            <div class="game-players-block form-block" id="game-players-block">
+            </div>
+            <div class="game-buttons-block" id="game-buttons-block">
+                <button class="button" id="put-coin" type="button" onclick="putCoin(); return false;">Put Coin</button>
+                <button class="button" id="take-card" type="button" onclick="takeCard(); return false;">Take Card</button>
+            </div>
+    </div>
+    <div id="result-screen">
+        <div class="logo little-logo">
+            <img src="img/hand_logo.png" class="logo-img" alt="NT">
+            <p>NO THANKS!</p>
+        </div>
+        <div class="result-block form-block">
+            <div class="result-block-header"><span>Result:</span></div>
+            <div class="scroll-wrapper">
+            <table class="result-table" id="result-table">
+            </table>
+            </div>
+        </div>
+        <button class="button" type="button" onclick="returnToLobby(); return false;">Return To Lobby</button>
+    </div>
 </div>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.js" integrity="sha512-lyIq9fRcCeSCXhp41XC/250UBmypAHV8KW+AhLcSEIksWHBfhzub6XXwDe67wTpOG8zrO2NAU/TYmEaCW+aQSg==" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js" integrity="sha512-iKDtgDyTHjAitUDdLljGhenhPwrbBfqTKWO1mkhSFH3A7blITC9MhYon6SjnMhp4o0rADGw9yAC6EW4t5a4K3g==" crossorigin="anonymous"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<script type="text/javascript" src="js/render.js"></script>
 <script type="text/javascript" src="js/main.js"></script>
 </html>

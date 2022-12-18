@@ -1,13 +1,11 @@
-let mainBlock = $('#main')
-let authBlock = $('#auth')
-let infoBlock = $('#player-info')
-let lobbyBlock = $('#lobby')
-let startGameButton = $('#start-game-button')
-let playersList = $('#players-list')
-
 let contentTypeHeader = {'Content-Type': 'application/json; charset=UTF-8'}
 
-renderMainWindow()
+let sock
+let stompClient
+let activeGameId
+let myNumber
+
+renderAuthAndCreateConnectScreen()
 
 function auth() {
     let playerName = $('#regName')[0].value
@@ -21,7 +19,7 @@ function auth() {
         dataType: 'json',
         data: JSON.stringify({name: playerName}),
         success: function () {
-            renderMainWindow()
+            renderAuthAndCreateConnectScreen()
         },
         xhrFields: {
             withCredentials: true
@@ -58,9 +56,10 @@ function connectGameWithInviteCode(inviteCodyValue) {
         data: JSON.stringify({inviteCode: inviteCodyValue}),
         success: function (data, textStatus, xhr) {
             console.log(data)
-            if (xhr.status === 200 && data.status === 'SUCCESS') {
+            if (xhr.status === 200) {
+                myNumber = data.playerNumber
                 subscribe(data.gameId)
-                renderLobby(data.isCreator, data.allPlayers)
+                renderLobbyScreen(data.isCreator, data.allPlayers, inviteCodyValue)
             }
         },
         xhrFields: {
@@ -70,59 +69,78 @@ function connectGameWithInviteCode(inviteCodyValue) {
 }
 
 function subscribe(gameId) {
-    let sock = new SockJS("/no-thanks");
-    let client = Stomp.over(sock);
-    client.connect({}, () => {
-        client.subscribe("/lobby/" + gameId, payload => {
-            console.log(payload)
-            let newPlayer = JSON.parse(payload.body)['newPlayerName']
-            addPLayerToList(newPlayer)
+    sock = new SockJS("/no-thanks");
+    stompClient = Stomp.over(sock);
+    stompClient.connect({}, () => {
+        stompClient.subscribe('/players/lobby/' + gameId + '/player', payload => {
+            processDirectMessage(JSON.parse(payload.body))
+        });
+        stompClient.subscribe("/lobby/" + gameId, payload => {
+            processTopicMessage(JSON.parse(payload.body))
         });
     });
+    activeGameId = gameId
 }
 
-function renderMainWindow() {
-    let cookies = parseCookie()
-    if (cookies['no-thanks-name'] === undefined || cookies['no-thanks-token'] === undefined) {
-        authWindow()
-    } else {
-        mainWindow(cookies['no-thanks-name'])
+function processTopicMessage(message) {
+    if (message['type'] === "LobbyConnectedMessage") {
+        addPlayerToLobbyList(message['newPlayer'])
+        $('#players-count').html(message['allPlayers'].length)
+    }
+    if (message['type'] === "RoundStartedMessage") {
+        renderGameScreen(message.players, message['currentCard'], message['currentPlayerNumber'])
+    }
+    if (message['type'] === "TakeCardMessage") {
+        if (message['playerNumber'] === myNumber) {
+            let coins = parseInt(currentPlayerCoins.html())
+            let cardCoins = parseInt(currentCardCoinsBlock.html())
+            coins += cardCoins
+            currentPlayerCoins.html(coins)
+        } else {
+            $('#' + 'other-player-card-block' + message['playerNumber']).append(message['takenCard']+',')
+        }
+        currentCardCoinsBlock.html('0')
+        currentCardBlock.html(message['newCardNumber'])
+    }
+    if (message['type'] === "PutCoinMessage") {
+        renderPlayButtons(message['newCurrentPlayerNumber'])
+        if (message['playerNumber'] === myNumber) {
+            let coins = parseInt(currentPlayerCoins.html())
+            coins -= 1
+            if (coins === 0) {
+                //Потом в render.js перенесу когда тут остальное в порядок приведу. Чтобы не забыть как disable ставить в jQuery
+                putCoinButton.prop("disabled", true)
+            }
+            currentPlayerCoins.html(coins)
+        }
+        currentCardCoinsBlock.html(message['currentCardCoins'])
+    }
+    if (message['type'] === "EndRoundMessage") {
+        renderEndRoundScreen(message.result)
     }
 }
 
-function renderLobby(isCreator, players) {
-    lobbyBlock.show()
-    mainBlock.hide()
-    authBlock.hide()
-    if (isCreator) {
-        startGameButton.show()
-    } else {
-        startGameButton.hide()
+function processDirectMessage(message) {
+    if (message['type'] === "ErrorMessage") {
+        showErrorMessage(message['message']);
     }
-    playersList.html('')
-    players.forEach(addPLayerToList)
+    if (message['type'] === "PlayerPersonalInfoMessage") {
+        updatePersonalInfo(message.coins, message.cards, message['isCurrentPlayer']);
+    }
+
+
 }
 
-function addPLayerToList(playerName) {
-    let playerLi = $("<li/>")
-    playerLi.append(document.createTextNode(playerName));
-    playersList.append(playerLi);
+function startGame() {
+    stompClient.send('/app/lobby/input/' + activeGameId + '/round', {}, JSON.stringify({wantToStart: true}))
 }
 
-
-function authWindow() {
-    mainBlock.hide()
-    infoBlock.hide()
-    authBlock.show()
-    lobbyBlock.hide()
+function putCoin() {
+    stompClient.send('/app/lobby/input/' + activeGameId + '/turn', {}, JSON.stringify({action: 'putCoin'}))
 }
 
-function mainWindow(name) {
-    mainBlock.show()
-    infoBlock.show()
-    authBlock.hide()
-    lobbyBlock.hide()
-    $('#player-name').html(name)
+function takeCard() {
+    stompClient.send('/app/lobby/input/' + activeGameId + '/turn', {}, JSON.stringify({action: 'takeCard'}))
 }
 
 function parseCookie() {
@@ -136,4 +154,12 @@ function parseCookie() {
             acc[decodeURIComponent(v[0].trim())] = decodeURIComponent(v[1].trim());
             return acc;
         }, {});
+}
+
+function returnToLobby() {
+    lobbyScreen.show()
+    createAndConnectScreen.hide()
+    authScreen.hide()
+    gameScreen.hide()
+    $('#result-screen').hide()
 }

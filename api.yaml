@@ -1,7 +1,7 @@
 output-topic:
   - /lobby/{gameId}
     messages:
-      - UserConnectedMessage
+      - LobbyConnectedMessage
       - UserDisconnectedMessage
       - UserLeaveMessage
       - RoundStartedMessage
@@ -14,10 +14,9 @@ output-topic:
       - PlayerPersonalInfoMessage
       - ErrorMessage
 
-UserConnectedMessage:
-  - newPlayerName
-  - newPlayerNumber
-  - allPlayerNames
+LobbyConnectedMessage:
+  - newPlayer
+  - allPlayers
 
 UserDisconnectedMessage???:
   - playerName
@@ -30,7 +29,8 @@ UserLeaveMessage:
   - allPlayerNames
 
 RoundStartedMessage:
-  - eachPlayerCoinCount
+  - players
+  - currentCard
   - currentPlayerNumber
 
 PutCoinMessage:
