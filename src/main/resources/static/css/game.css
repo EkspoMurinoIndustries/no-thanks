@@ -12,12 +12,6 @@
     line-height: 0;
 }
 
-@media screen and (max-width: 500px) {
-    #current-card {
-        font-size: 150px;
-    }
-}
-
 #current-card-coins {
     font-size: 80px;
     color: #ffbf00;
@@ -54,8 +48,6 @@
     max-width: 835px;
     max-height: 39vh;
     margin: 30px auto;
-    overflow: scroll;
-    overflow-x: hidden;
 }
 
 .game-players-block{
@@ -131,4 +123,18 @@
 
 .cards-card-block .card-item-degree {
     font-size: 13px;
+}
+
+@media screen and (max-width: 500px) {
+    #current-card {
+        font-size: 150px;
+    }
+}
+
+@media screen and (max-width: 835px) {
+
+    #game-screen .form-block {
+        overflow: scroll;
+        overflow-x: hidden;
+    }
 }
