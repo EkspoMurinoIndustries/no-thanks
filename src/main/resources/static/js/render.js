@@ -106,8 +106,9 @@ function renderSingleGamePlayer(player, activePlayerNumber) {
     } else {
         let otherPlayerClass = activePlayerNumber === player.number ? "player-card turn" : "player-card"
         let otherPlayerCardsBlockId = `other-player-card-block-${player.number}`
+        let otherPlayerBlockId = `other-player-block-${player.number}`
         let otherPlayerDiv = $(
-            `<div class="${otherPlayerClass}">
+            `<div class="${otherPlayerClass}" id="${otherPlayerBlockId}">
                 <div class="nickname-player-card-block">
                     <div class="player-ava-block"></div>
                     <span class="nickname">${player.name}</span>
@@ -217,4 +218,11 @@ function getColor(number) {
     let blue = 255 - Math.min(dif, 255)
     let red = Math.max(0, dif - 255)
     return 'rgb(' + red + ',255,' + blue + ')'
+}
+
+function setCurrentTurnPlayer(newCurrentPlayerNumber) {
+    $( ".player-card.turn").removeClass('turn')
+    if (newCurrentPlayerNumber !== myNumber) {
+        $(`#other-player-block-${newCurrentPlayerNumber}`).addClass('turn')
+    }
 }

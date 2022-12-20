@@ -99,6 +99,7 @@ function processTopicMessage(message) {
     }
     if (message['type'] === "PutCoinMessage") {
         currentCardCoinsBlock.html(message['currentCardCoins'])
+        setCurrentTurnPlayer(message['newCurrentPlayerNumber'])
     }
     if (message['type'] === "EndRoundMessage") {
         renderEndRoundScreen(message.result)
