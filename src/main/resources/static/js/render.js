@@ -87,9 +87,12 @@ function renderGameScreen(playersList, currentCard, activePlayerNumber) {
     renderPlayButtons(activePlayerNumber === myNumber)
 }
 
-function renderPlayButtons(isCurrent) {
+function renderPlayButtons(isCurrent, enoughCoins) {
     if (isCurrent) {
         gameButtons.show()
+        if (enoughCoins !== undefined) {
+            putCoinButton.prop("disabled", !enoughCoins)
+        }
     } else {
         gameButtons.hide()
     }
@@ -120,7 +123,7 @@ function renderSingleGamePlayer(player, activePlayerNumber) {
 function updatePersonalInfo(coins, cards, isCurrentPlayer) {
     currentPlayerCoins.html(coins)
     currentPlayerCards.html(renderCards(cards))
-    renderPlayButtons(isCurrentPlayer)
+    renderPlayButtons(isCurrentPlayer, coins > 0)
 }
 
 function updateCardsForPlayer(playerNumber, cards) {
