@@ -14,7 +14,7 @@ textarea:focus, input:focus {
     outline: none;
 }
 
-#create-and-connect-game-screen, #result-screen {
+#auth-screen, #create-and-connect-game-screen, #lobby-screen, #game-screen, #result-screen {
     display: none;
 }
 
