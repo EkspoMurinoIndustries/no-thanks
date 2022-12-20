@@ -83,7 +83,7 @@ fun Lobby.pause() {
 
 fun Lobby.startGame() {
     if (players.size < 2) {
-        throw GameException("Sorry, you can't play one", gameId)
+        throw GameException("Sorry, you can't play alone", gameId)
     }
     game = createGame()
 }

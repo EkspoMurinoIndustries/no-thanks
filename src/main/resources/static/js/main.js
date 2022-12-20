@@ -91,19 +91,14 @@ function processTopicMessage(message) {
         renderGameScreen(message.players, message['currentCard'], message['currentPlayerNumber'])
     }
     if (message['type'] === "TakeCardMessage") {
-        if (message['playerNumber'] === myNumber) {
-            let coins = parseInt(currentPlayerCoins.html())
-            let cardCoins = parseInt(currentCardCoinsBlock.html())
-            coins += cardCoins
-            currentPlayerCoins.html(coins)
-        } else {
-            $('#' + 'other-player-card-block' + message['playerNumber']).append(message['takenCard']+',')
+        if (message['playerNumber'] !== myNumber) {
+            updateCardsForPlayer(message['playerNumber'],  message['allPlayerCards'])
         }
         currentCardCoinsBlock.html('0')
         currentCardBlock.html(message['newCardNumber'])
     }
     if (message['type'] === "PutCoinMessage") {
-        renderPlayButtons(message['newCurrentPlayerNumber'])
+        renderPlayButtons(message['newCurrentPlayerNumber'] === myNumber)
         if (message['playerNumber'] === myNumber) {
             let coins = parseInt(currentPlayerCoins.html())
             coins -= 1
