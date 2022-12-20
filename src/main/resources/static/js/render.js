@@ -81,7 +81,9 @@ function renderGameScreen(playersList, currentCard, activePlayerNumber) {
     $('#result-screen').hide()
 
     gamePlayersList.html('')
-    playersList.forEach(player => renderSingleGamePlayer(player, activePlayerNumber))
+    let index = playersList.findIndex(player => player.number === myNumber)
+    let rightPlyerList = playersList.slice(index).concat(playersList.slice(0, index))
+    rightPlyerList.forEach(player => renderSingleGamePlayer(player, activePlayerNumber))
     currentCardBlock.html(currentCard)
     currentCardCoinsBlock.html('0')
     renderPlayButtons(activePlayerNumber === myNumber)
