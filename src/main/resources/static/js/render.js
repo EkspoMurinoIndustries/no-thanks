@@ -18,7 +18,7 @@ let errorMessage = $('<div class="error-message" id="error-message">\n' +
     '    <div class="error-message--appeared">\n' +
     '        <div class="error-message-box">\n' +
     '            <div class="error-message-text"><img src="img/error_logo.png" alt=""><br><span id="error-message-text">Oops, mistake</span></div>\n' +
-    '            <button class="button" onclick="closeErrorMessage(); return false;">OK</button>\n' +
+    '            <button class="button error-message-button" onclick="closeErrorMessage(); return false;">OK</button>\n' +
     '        </div>\n' +
     '    </div>\n' +
     '</div>')

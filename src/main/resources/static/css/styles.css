@@ -262,13 +262,12 @@ textarea:focus, input:focus {
     background: #fff;
     max-width: 100%;
     max-height: 90vh;
-    min-height: 150px;
+    min-height: 200px;
     min-width: 350px;
     overflow: auto;
 
     box-sizing: border-box;
     width: 35vw;
-    height: 200px;
 
     background: linear-gradient(174.61deg, #FF5353 -29.46%, #FF9680 94.92%) padding-box,
     linear-gradient(138.05deg, #FF9595, #F68F7800, #FFEFB766) border-box;
@@ -279,7 +278,6 @@ textarea:focus, input:focus {
 }
 
 .error-message-text {
-    height: 100px;
     font-size: 25px;
     margin-top: 20px;
     text-align: center;
@@ -296,6 +294,9 @@ textarea:focus, input:focus {
     bottom: 7px;
     margin-bottom: 15px;
     margin-top: 15px;
+}
+.error-message-button{
+    margin-bottom: 15px;
 }
 
 
