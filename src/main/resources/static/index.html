@@ -20,9 +20,11 @@
                     <p>NO THANKS!</p>
                 </div>
                 <div class="form-block your-name">
-                    <label class="label" for="regName">Hi, print your name</label>
-                    <input class="input" type="text" id="regName" name="regName" autofocus>
-                    <button class="button ok-button" type="button" onclick="auth(); return false;">OK</button>
+                    <form>
+                        <label class="label" for="regName">Hi, print your name</label>
+                        <input class="input" type="text" id="regName" name="regName" autofocus>
+                        <button class="button ok-button" type="submit" onclick="auth(); return false;">OK</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -40,7 +42,7 @@
                     </form>
                     <form class="connect-form">
                         <input class="input invite-code-input" type="text" id="inviteCode" name="inviteCode" maxlength="5">
-                        <button class="button connect-game-button" type="button" onclick="connectGame(); return false;">Connect</button>
+                        <button class="button connect-game-button" type="submit" onclick="connectGame(); return false;">Connect</button>
                     </form>
                 </div>
             </div>
