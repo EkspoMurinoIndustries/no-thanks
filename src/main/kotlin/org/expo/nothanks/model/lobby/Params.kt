@@ -5,5 +5,5 @@ data class Params(
     var minCard: Int = 3,
     var maxCard: Int = 35,
     var extraCards: Int = 5,
-    var maxPlayerNumber: Int = 10
+    var maxPlayerNumber: Int = 7
 )

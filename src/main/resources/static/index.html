@@ -20,9 +20,11 @@
                     <p>NO THANKS!</p>
                 </div>
                 <div class="form-block your-name">
-                    <label class="label" for="regName">Hi, print your name</label>
-                    <input class="input" type="text" id="regName" name="regName" autofocus>
-                    <button class="button ok-button" type="button" onclick="auth(); return false;">OK</button>
+                    <form>
+                        <label class="label" for="regName">Hi, print your name</label>
+                        <input class="input" type="text" id="regName" name="regName" autofocus>
+                        <button class="button ok-button" type="submit" onclick="auth(); return false;">OK</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -40,7 +42,7 @@
                     </form>
                     <form class="connect-form">
                         <input class="input invite-code-input" type="text" id="inviteCode" name="inviteCode" maxlength="5">
-                        <button class="button connect-game-button" type="button" onclick="connectGame(); return false;">Connect</button>
+                        <button class="button connect-game-button" type="submit" onclick="connectGame(); return false;">Connect</button>
                     </form>
                 </div>
             </div>
@@ -56,7 +58,7 @@
                 <div class="lobby-grid">
                     <div class="form-block players-block">
                         <div class="players-count-block">
-                            <span>Players <span id="players-count">1</span>/<span id="max-players-count">10</span></span>
+                            <span>Players <span id="players-count">1</span>/<span id="max-players-count">-1</span></span>
                         </div>
                         <ol id="players-list" class="players-ol">
                         </ol>
@@ -78,8 +80,8 @@
             </div>
             <div class="player-status-block">
                 <div class="own-player-card">
-                    <div class="coins-card-block"><span id="coins-count">-1</span></div>
-                    <div class="cards-card-block"><span id="player-cards"></span></div>
+                    <div class="coins-card-block"><span id="coins-count">0</span></div>
+                    <div class="cards-card-block" id="player-cards"></div>
                 </div>
             </div>
             <div class="game-players-block form-block" id="game-players-block">

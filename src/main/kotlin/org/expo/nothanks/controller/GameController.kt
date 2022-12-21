@@ -57,6 +57,7 @@ class GameController(
                 gamesService.putCoin(gameId, playerId) {
                     notificationService.putCoin(it)
                     notificationService.updateInfoForPrevious(it)
+                    notificationService.updateInfo(it)
                 }
             } else {
                 gamesService.takeCard(gameId, playerId) {

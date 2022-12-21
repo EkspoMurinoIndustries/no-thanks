@@ -72,7 +72,8 @@ class NotificationService(
         messageToTopic(lobby, TakeCardMessage(
             playerNumber = lobby.getGame().currentPlayerNumber(),
             takenCard = lobby.getGame().previousCard(),
-            newCardNumber = lobby.getGame().currentCardNumber()
+            newCardNumber = lobby.getGame().currentCardNumber(),
+            allPlayerCards = lobby.getGame().currentPlayer().cards
         ))
     }
 

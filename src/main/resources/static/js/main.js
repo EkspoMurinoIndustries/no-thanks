@@ -59,7 +59,7 @@ function connectGameWithInviteCode(inviteCodyValue) {
             if (xhr.status === 200) {
                 myNumber = data.playerNumber
                 subscribe(data.gameId)
-                renderLobbyScreen(data.isCreator, data.allPlayers, inviteCodyValue)
+                renderLobbyScreen(data.isCreator, data.allPlayers, inviteCodyValue, data.params)
             }
         },
         xhrFields: {
@@ -91,29 +91,15 @@ function processTopicMessage(message) {
         renderGameScreen(message.players, message['currentCard'], message['currentPlayerNumber'])
     }
     if (message['type'] === "TakeCardMessage") {
-        if (message['playerNumber'] === myNumber) {
-            let coins = parseInt(currentPlayerCoins.html())
-            let cardCoins = parseInt(currentCardCoinsBlock.html())
-            coins += cardCoins
-            currentPlayerCoins.html(coins)
-        } else {
-            $('#' + 'other-player-card-block' + message['playerNumber']).append(message['takenCard']+',')
+        if (message['playerNumber'] !== myNumber) {
+            updateCardsForPlayer(message['playerNumber'],  message['allPlayerCards'])
         }
         currentCardCoinsBlock.html('0')
         currentCardBlock.html(message['newCardNumber'])
     }
     if (message['type'] === "PutCoinMessage") {
-        renderPlayButtons(message['newCurrentPlayerNumber'])
-        if (message['playerNumber'] === myNumber) {
-            let coins = parseInt(currentPlayerCoins.html())
-            coins -= 1
-            if (coins === 0) {
-                //Потом в render.js перенесу когда тут остальное в порядок приведу. Чтобы не забыть как disable ставить в jQuery
-                putCoinButton.prop("disabled", true)
-            }
-            currentPlayerCoins.html(coins)
-        }
         currentCardCoinsBlock.html(message['currentCardCoins'])
+        setCurrentTurnPlayer(message['newCurrentPlayerNumber'])
     }
     if (message['type'] === "EndRoundMessage") {
         renderEndRoundScreen(message.result)
