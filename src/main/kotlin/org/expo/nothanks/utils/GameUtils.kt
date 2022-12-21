@@ -87,6 +87,10 @@ fun calculateCards(cards: Set<Int>): Int {
     return score
 }
 
+fun Game.leftNumberCards(): Int {
+    return deck.cards.size - deck.skip - 1
+}
+
 fun Game.pause() {
     status = GameStatusEnum.PAUSED
 }

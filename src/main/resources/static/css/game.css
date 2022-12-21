@@ -1,15 +1,33 @@
 .current-card-block {
     text-align: center;
+    display: grid;
+    grid-template-columns: 50px 244px 50px;
+    grid-template-areas: ". current-card current-info";
+    margin: 0 auto;
+    width: fit-content;
+    align-items: center;
 }
 .current-card-block span{
     text-shadow: 0 5px 0 rgba(0, 0, 0, 0.55);
 }
 
+.current-card-info-block {
+    grid-area: current-info;
+}
+
+.current-card-number-block {
+    grid-area: current-card;
+}
+
+#current-card-left-coins {
+    font-size: 60px;
+    color: #50449c;
+    text-shadow: none;
+}
+
 #current-card {
     font-size: 180px;
     font-weight: 600;
-    margin-left: 20px;
-    line-height: 0;
 }
 
 #current-card-coins {
@@ -126,6 +144,19 @@
 }
 
 @media screen and (max-width: 500px) {
+
+    .current-card-block {
+        grid-template-columns: 50px 190px 50px;
+    }
+
+    #current-card-left-coins {
+        font-size: 50px;
+    }
+
+    #current-card-coins {
+        font-size: 60px;
+    }
+
     #current-card {
         font-size: 150px;
     }

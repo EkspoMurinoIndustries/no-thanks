@@ -89,11 +89,13 @@ function processTopicMessage(message) {
     }
     if (message['type'] === "RoundStartedMessage") {
         renderGameScreen(message.players, message['currentCard'], message['currentPlayerNumber'])
+        updateLeftNumberCards(message['leftNumberCards'])
     }
     if (message['type'] === "TakeCardMessage") {
         if (message['playerNumber'] !== myNumber) {
             updateCardsForPlayer(message['playerNumber'],  message['allPlayerCards'])
         }
+        updateLeftNumberCards(message['leftNumberCards'])
         currentCardCoinsBlock.html('0')
         currentCardBlock.html(message['newCardNumber'])
     }

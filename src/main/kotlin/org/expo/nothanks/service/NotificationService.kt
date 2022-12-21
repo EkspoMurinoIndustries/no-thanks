@@ -56,7 +56,8 @@ class NotificationService(
         messageToTopic(lobby, RoundStartedMessage(
             currentPlayerNumber = lobby.getGame().currentPlayerNumber(),
             players = lobby.getPlayersInGame(),
-            currentCard = lobby.getGame().currentCard()
+            currentCard = lobby.getGame().currentCard(),
+            leftNumberCards = lobby.getGame().leftNumberCards()
         ))
     }
 
@@ -73,7 +74,8 @@ class NotificationService(
             playerNumber = lobby.getGame().currentPlayerNumber(),
             takenCard = lobby.getGame().previousCard(),
             newCardNumber = lobby.getGame().currentCardNumber(),
-            allPlayerCards = lobby.getGame().currentPlayer().cards
+            allPlayerCards = lobby.getGame().currentPlayer().cards,
+            leftNumberCards = lobby.getGame().leftNumberCards()
         ))
     }
 

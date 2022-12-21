@@ -3,7 +3,8 @@ package org.expo.nothanks.model.event.output
 data class RoundStartedMessage(
     val currentPlayerNumber: Int,
     val players: List<SafeGamePLayer>,
-    val currentCard: Int
+    val currentCard: Int,
+    val leftNumberCards: Int
 ): OutputMessage
 
 data class SafeGamePLayer(
