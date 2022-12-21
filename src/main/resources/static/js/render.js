@@ -33,7 +33,7 @@ function renderAuthAndCreateConnectScreen() {
     }
 }
 
-function renderLobbyScreen(isCreator, players, lobbyInviteCode) {
+function renderLobbyScreen(isCreator, players, lobbyInviteCode, params) {
     $('#invite-code').html(lobbyInviteCode)
     lobbyScreen.show()
     createAndConnectScreen.hide()
@@ -47,6 +47,7 @@ function renderLobbyScreen(isCreator, players, lobbyInviteCode) {
     lobbyPlayersList.html('')
     players.forEach(addPlayerToLobbyList)
     $('#players-count').html(players.length)
+    $('#max-players-count').html(params.maxPlayerNumber)
 }
 
 function addPlayerToLobbyList(player) {

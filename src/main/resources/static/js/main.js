@@ -59,7 +59,7 @@ function connectGameWithInviteCode(inviteCodyValue) {
             if (xhr.status === 200) {
                 myNumber = data.playerNumber
                 subscribe(data.gameId)
-                renderLobbyScreen(data.isCreator, data.allPlayers, inviteCodyValue)
+                renderLobbyScreen(data.isCreator, data.allPlayers, inviteCodyValue, data.params)
             }
         },
         xhrFields: {
