@@ -5,5 +5,5 @@ data class TakeCardMessage(
     val takenCard: Int,
     val newCardNumber: Int,
     val allPlayerCards: Set<Int>,
-    val leftNumberCards: Int
+    val remainingNumberCards: Int
 ): OutputMessage

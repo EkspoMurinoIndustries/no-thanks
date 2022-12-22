@@ -134,7 +134,7 @@ function updateCardsForPlayer(playerNumber, cards) {
     $(`#other-player-card-block-${playerNumber}`).html(renderCards(cards))
 }
 
-function updateLeftNumberCards(number) {
+function updateremainingNumberCards(number) {
     $('#current-card-left-coins').html(number)
 }
 

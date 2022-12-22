@@ -57,7 +57,7 @@ class NotificationService(
             currentPlayerNumber = lobby.getGame().currentPlayerNumber(),
             players = lobby.getPlayersInGame(),
             currentCard = lobby.getGame().currentCard(),
-            leftNumberCards = lobby.getGame().leftNumberCards()
+            remainingNumberCards = lobby.getGame().remainingNumberCards()
         ))
     }
 
@@ -75,7 +75,7 @@ class NotificationService(
             takenCard = lobby.getGame().previousCard(),
             newCardNumber = lobby.getGame().currentCardNumber(),
             allPlayerCards = lobby.getGame().currentPlayer().cards,
-            leftNumberCards = lobby.getGame().leftNumberCards()
+            remainingNumberCards = lobby.getGame().remainingNumberCards()
         ))
     }
 

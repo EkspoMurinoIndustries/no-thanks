@@ -4,7 +4,7 @@ data class RoundStartedMessage(
     val currentPlayerNumber: Int,
     val players: List<SafeGamePLayer>,
     val currentCard: Int,
-    val leftNumberCards: Int
+    val remainingNumberCards: Int
 ): OutputMessage
 
 data class SafeGamePLayer(
