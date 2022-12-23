@@ -134,6 +134,10 @@ function updateCardsForPlayer(playerNumber, cards) {
     $(`#other-player-card-block-${playerNumber}`).html(renderCards(cards))
 }
 
+function updateremainingNumberCards(number) {
+    $('#current-card-left-coins').html(number)
+}
+
 function renderCards(cards) {
     return groupCards(cards).map(value => {
         let degree = ''
