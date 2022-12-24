@@ -27,64 +27,44 @@ function auth() {
     });
 }
 
+function connectAndSend(message) {
+    let cookies = parseCookie()
+    let name = cookies['no-thanks-name']
+    if (name === undefined) {
+        showErrorMessage("Name is undefined")
+        return
+    }
+    message.name = name
+    if (sock === undefined) {
+        sock = new SockJS("/no-thanks");
+    }
+    if (stompClient === undefined) {
+        stompClient = Stomp.over(sock);
+    }
+    if (stompClient.connected) {
+        stompClient.send('/app/lobby/input/connect', {}, JSON.stringify(message))
+    } else {
+        stompClient.connect({}, () => {
+            stompClient.subscribe('/players/lobby/info', payload => {
+                processDirectInfoMessage(JSON.parse(payload.body))
+            });
+            stompClient.send('/app/lobby/input/connect', {}, JSON.stringify(message))
+        }, function(message) {
+            if (message.startsWith("Whoops! Lost connection to")) {
+                renderAuthAndCreateConnectScreen()
+                showErrorMessage("You have been disconnected")
+            }
+        });
+    }
+}
+
 function createGame() {
-    $.post({
-        url: 'api/game/create',
-        headers: contentTypeHeader,
-        dataType: 'json',
-        data: JSON.stringify({}),
-        success: function (data) {
-            console.log(data)
-            connectGameWithInviteCode(data.inviteCode)
-        },
-        xhrFields: {
-            withCredentials: true
-        }
-    });
+    connectAndSend({createGame: true})
 }
 
 function connectGame() {
-    let inviteCodeValue = $('#inviteCode').val()
-    connectGameWithInviteCode(inviteCodeValue)
-}
-
-function connectGameWithInviteCode(inviteCodyValue) {
-    $.post({
-        url: 'api/game/connect',
-        headers: contentTypeHeader,
-        dataType: 'json',
-        data: JSON.stringify({inviteCode: inviteCodyValue}),
-        success: function (data, textStatus, xhr) {
-            console.log(data)
-            if (xhr.status === 200) {
-                myNumber = data.playerNumber
-                subscribe(data.gameId)
-                renderLobbyScreen(data.isCreator, data.allPlayers, inviteCodyValue, data.params)
-            }
-        },
-        xhrFields: {
-            withCredentials: true
-        }
-    });
-}
-
-function subscribe(gameId) {
-    sock = new SockJS("/no-thanks");
-    stompClient = Stomp.over(sock);
-    stompClient.connect({}, () => {
-        stompClient.subscribe('/players/lobby/' + gameId + '/player', payload => {
-            processDirectMessage(JSON.parse(payload.body))
-        });
-        stompClient.subscribe("/lobby/" + gameId, payload => {
-            processTopicMessage(JSON.parse(payload.body))
-        });
-    }, function(message) {
-        if (message.startsWith("Whoops! Lost connection to")) {
-            renderAuthAndCreateConnectScreen()
-            showErrorMessage("You have been disconnected")
-        }
-    });
-    activeGameId = gameId
+    let inviteCodeValue = $('#inviteCode').val().toUpperCase()
+    connectAndSend({inviteCode: inviteCodeValue})
 }
 
 function processTopicMessage(message) {
@@ -93,14 +73,13 @@ function processTopicMessage(message) {
         $('#players-count').html(message['allPlayers'].length)
     }
     if (message['type'] === "RoundStartedMessage") {
-        renderGameScreen(message.players, message['currentCard'], message['currentPlayerNumber'])
-        updateremainingNumberCards(message['remainingNumberCards'])
+        renderGameScreen(message.players, message['currentCard'], message['currentPlayerNumber'], message['remainingNumberCards'])
     }
     if (message['type'] === "TakeCardMessage") {
         if (message['playerNumber'] !== myNumber) {
             updateCardsForPlayer(message['playerNumber'],  message['allPlayerCards'])
         }
-        updateremainingNumberCards(message['remainingNumberCards'])
+        updateRemainingNumberCards(message['remainingNumberCards'])
         currentCardCoinsBlock.html('0')
         currentCardBlock.html(message['newCardNumber'])
     }
@@ -120,8 +99,25 @@ function processDirectMessage(message) {
     if (message['type'] === "PlayerPersonalInfoMessage") {
         updatePersonalInfo(message.coins, message.cards, message['isCurrentPlayer']);
     }
+}
 
-
+function processDirectInfoMessage(message) {
+    if (message['type'] === "UserConnectedMessage") {
+        myNumber = message['playerNumber']
+        activeGameId = message['gameId']
+        stompClient.subscribe('/players/lobby/' + activeGameId + '/player', payload => {
+            processDirectMessage(JSON.parse(payload.body))
+        });
+        stompClient.subscribe("/lobby/" + activeGameId, payload => {
+            processTopicMessage(JSON.parse(payload.body))
+        });
+        if (message['isStarted'] === true) {
+            let game = message['gameStatus']
+            renderGameScreen(game.players, game['currentCard'], game['currentPlayerNumber'], game['remainingNumberCards'], game['currentCardCoin'])
+        } else {
+            renderLobbyScreen(message['isCreator'], message['players'], message['inviteCode'], message['params'])
+        }
+    }
 }
 
 function startGame() {

@@ -74,7 +74,7 @@ function renderCreateAndConnectScreen(name) {
     $('#player-name').html(name)
 }
 
-function renderGameScreen(playersList, currentCard, activePlayerNumber) {
+function renderGameScreen(playersList, currentCard, activePlayerNumber, remainingNumberCard, currentCardCoin = 0) {
     createAndConnectScreen.hide()
     authScreen.hide()
     lobbyScreen.hide()
@@ -86,8 +86,9 @@ function renderGameScreen(playersList, currentCard, activePlayerNumber) {
     let rightPlyerList = playersList.slice(index).concat(playersList.slice(0, index))
     rightPlyerList.forEach(player => renderSingleGamePlayer(player, activePlayerNumber))
     currentCardBlock.html(currentCard)
-    currentCardCoinsBlock.html('0')
+    currentCardCoinsBlock.html(currentCardCoin)
     renderPlayButtons(activePlayerNumber === myNumber)
+    updateRemainingNumberCards(remainingNumberCard)
 }
 
 function renderPlayButtons(isCurrent, enoughCoins) {
@@ -134,7 +135,7 @@ function updateCardsForPlayer(playerNumber, cards) {
     $(`#other-player-card-block-${playerNumber}`).html(renderCards(cards))
 }
 
-function updateremainingNumberCards(number) {
+function updateRemainingNumberCards(number) {
     $('#current-card-left-coins').html(number)
 }
 
@@ -145,7 +146,7 @@ function renderCards(cards) {
             degree = `<span class="card-item-degree" style="color: ${getColor(value[1])}">.${value[1]}</span>`
         }
         return `<span class="card-item" style="color: ${getColor(value[0])}">${value[0]}${degree}</span>`
-    })
+    }).join('')
 }
 
 function closeErrorMessage(){
