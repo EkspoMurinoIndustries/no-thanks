@@ -2,8 +2,8 @@ package org.expo.nothanks.utils
 
 import org.expo.nothanks.exception.GameException
 import org.expo.nothanks.exception.PlayerException
-import org.expo.nothanks.model.GameStatus
-import org.expo.nothanks.model.SafeLobbyPlayer
+import org.expo.nothanks.model.event.output.GameStatus
+import org.expo.nothanks.model.event.output.SafeLobbyPlayer
 import org.expo.nothanks.model.event.input.NewParams
 import org.expo.nothanks.model.event.output.SafeGamePLayer
 import org.expo.nothanks.model.event.output.Score
@@ -46,7 +46,9 @@ fun Lobby.gameStatusOrNull(playerId: UUID): GameStatus? {
             currentCard = game.currentCard(),
             currentCardCoin = game.currentCardCoins,
             isCurrentPlayer = game.isPlayerCurrent(playerId),
-            cardsByPlayer = game.playerSequence().associate { it.number to it.cards }
+            remainingNumberCards = game.remainingNumberCards(),
+            players = getPlayersInGame(),
+            currentPlayerNumber = game.currentPlayerNumber()
         )
     } else {
         null

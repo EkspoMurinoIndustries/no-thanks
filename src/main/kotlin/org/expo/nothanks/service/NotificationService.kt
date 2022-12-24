@@ -118,7 +118,7 @@ class NotificationService(
         simpMessagingTemplate.convertAndSend("/lobby/$gameId", message)
     }
 
-    private fun messageToUser(lobby: Lobby, playerId: UUID, message: OutputMessage) {
+    fun messageToUser(lobby: Lobby, playerId: UUID, message: OutputMessage) {
         simpMessagingTemplate.convertAndSendToUser(
             playerId.toString(),
             "/lobby/${lobby.gameId}/player",

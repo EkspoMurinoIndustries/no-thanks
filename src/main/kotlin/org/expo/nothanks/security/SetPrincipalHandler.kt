@@ -10,7 +10,7 @@ import java.security.Principal
 import java.util.*
 
 @Component
-class NoThanksHandshakeHandler(@Value("\${no-thanks.cookies.id}") val tokenName: String) : DefaultHandshakeHandler() {
+class SetPrincipalHandler(@Value("\${no-thanks.cookies.id}") val tokenName: String) : DefaultHandshakeHandler() {
 
     override fun determineUser(
         request: ServerHttpRequest,

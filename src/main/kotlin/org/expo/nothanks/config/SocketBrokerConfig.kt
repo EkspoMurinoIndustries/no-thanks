@@ -1,6 +1,7 @@
 package org.expo.nothanks.config
 
-import org.expo.nothanks.security.NoThanksHandshakeHandler
+import org.expo.nothanks.security.SetPrincipalHandler
+import org.expo.nothanks.security.SeveralConnectionsInterceptor
 import org.springframework.context.annotation.Configuration
 import org.springframework.messaging.simp.config.MessageBrokerRegistry
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
@@ -10,7 +11,8 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Configuration
 @EnableWebSocketMessageBroker
 class SocketBrokerConfig(
-    val noThanksHandshakeHandler: NoThanksHandshakeHandler
+    val setPrincipalHandler: SetPrincipalHandler,
+    val severalConnectionsInterceptor: SeveralConnectionsInterceptor
 ) : WebSocketMessageBrokerConfigurer {
 
     override fun configureMessageBroker(config: MessageBrokerRegistry) {
@@ -22,7 +24,8 @@ class SocketBrokerConfig(
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         registry
             .addEndpoint("/no-thanks")
-            .setHandshakeHandler(noThanksHandshakeHandler)
+            .setHandshakeHandler(setPrincipalHandler)
+            .addInterceptors(severalConnectionsInterceptor)
             .withSockJS()
     }
 }
