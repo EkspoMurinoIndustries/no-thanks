@@ -78,6 +78,11 @@ function subscribe(gameId) {
         stompClient.subscribe("/lobby/" + gameId, payload => {
             processTopicMessage(JSON.parse(payload.body))
         });
+    }, function(message) {
+        if (message.startsWith("Whoops! Lost connection to")) {
+            renderAuthAndCreateConnectScreen()
+            showErrorMessage("You have been disconnected")
+        }
     });
     activeGameId = gameId
 }
