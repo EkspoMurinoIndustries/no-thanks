@@ -27,10 +27,20 @@ let gameButtons = $('#game-buttons-block')
 
 function renderAuthAndCreateConnectScreen() {
     let cookies = parseCookie()
+
+    function validateInviteCode(URLInviteCode) {
+        return URLInviteCode.length === 5
+    }
+
     if (cookies['no-thanks-name'] === undefined || cookies['no-thanks-token'] === undefined) {
         renderAuthScreen()
     } else {
-        renderCreateAndConnectScreen(cookies['no-thanks-name'])
+        let URLInviteCode = location.pathname.substring(1);
+        if (validateInviteCode(URLInviteCode)) {
+            connectGame(URLInviteCode)
+        } else {
+            renderCreateAndConnectScreen(cookies['no-thanks-name'])
+        }
     }
 }
 
