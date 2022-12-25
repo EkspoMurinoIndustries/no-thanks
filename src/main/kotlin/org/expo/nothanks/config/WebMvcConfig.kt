@@ -13,7 +13,7 @@ class WebMvcConfig {
     fun forwardToIndex(): WebMvcConfigurer {
         return object : WebMvcConfigurer {
             override fun addViewControllers(registry: ViewControllerRegistry) {
-                registry.addViewController("").setViewName(
+                registry.addViewController("/{path:[^\\.]+}").setViewName(
                     "forward:/index.html"
                 )
             }

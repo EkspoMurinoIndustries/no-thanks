@@ -66,9 +66,11 @@ function createGame() {
     connectAndSend({createGame: true})
 }
 
-function connectGame() {
-    let inviteCodeValue = $('#inviteCode').val().toUpperCase()
-    connectAndSend({inviteCode: inviteCodeValue})
+function connectGame(inviteCode = undefined) {
+    if (inviteCode === undefined) {
+        inviteCode = $('#inviteCode').val().toUpperCase()
+    }
+    connectAndSend({inviteCode: inviteCode})
 }
 
 function processTopicMessage(message) {
@@ -116,6 +118,7 @@ function processDirectMessage(message) {
 
 function processDirectInfoMessage(message) {
     if (message['type'] === "UserConnectedMessage") {
+        window.history.pushState({},"", message['inviteCode']);
         myNumber = message['playerNumber']
         activeGameId = message['gameId']
         stompClient.subscribe('/players/lobby/' + activeGameId + '/player', payload => {
