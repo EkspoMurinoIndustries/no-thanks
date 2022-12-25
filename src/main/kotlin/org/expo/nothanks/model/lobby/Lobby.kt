@@ -11,5 +11,6 @@ data class Lobby(
     val params: Params = Params(),
     val gameId: UUID = UUID.randomUUID(),
     var game: Game? = null,
-    var round: Int = 0
+    var round: Int = 0,
+    var active: Boolean = true
 )

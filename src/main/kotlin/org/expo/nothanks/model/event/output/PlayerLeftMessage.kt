@@ -1,6 +1,6 @@
 package org.expo.nothanks.model.event.output
 
-data class PlayerDisconnectedMessage(
+data class PlayerLeftMessage(
     val isGameStarted: Boolean,
     val player: SafeLobbyPlayer
 ): OutputMessage

@@ -17,15 +17,37 @@ fun Lobby.removePlayer(playerId: UUID) {
     this.players.remove(playerId)
 }
 
-fun Lobby.connectPlayer(playerId: UUID) {
+fun Lobby.connectPlayer(playerId: UUID): Boolean {
     if (disconnectedPLayers.contains(playerId)) {
         disconnectedPLayers.remove(playerId)
-        if (disconnectedPLayers.isEmpty() && !isGameStarted()) {
-            game!!.continueGame()
-        }
+        return true
     } else if (!players.values.any { it.id == playerId }) {
         throw PlayerException("Impossible to connect player to this game", gameId, playerId)
     }
+    return false
+}
+
+fun Lobby.playerAlreadyInGame(playerId: UUID): Boolean {
+    return this.players.containsKey(playerId)
+}
+
+fun Lobby.addPlayer(playerId: UUID, name: String): Boolean {
+    if (!this.players.containsKey(playerId)) {
+        if (players.size >= params.maxPlayerNumber) {
+            throw PlayerException("Lobby is filled", gameId, playerId)
+        }
+        this.players[playerId] = LobbyPlayer(
+            id = playerId,
+            number = this.players.values.maxOfOrNull { it.number }?.plus(1) ?: 0,
+            name = name,
+        )
+        return true
+    }
+    return false
+}
+
+fun Lobby.setNotActive() {
+    active = false
 }
 
 fun Lobby.shouldBeDeleted(): Boolean {
@@ -69,19 +91,18 @@ fun Lobby.disconnectPlayer(playerId: UUID) {
     if (!players.values.any { it.id == playerId }) {
         throw PlayerException("Impossible to disconnect player from this game", gameId, playerId)
     }
-
-    if (isGameStarted()) {
+    if (isGameStarted() || getPlayerInLobby(playerId).score.isNotEmpty()) {
         disconnectedPLayers.add(playerId)
     } else {
         removePlayer(playerId)
     }
 }
 
-fun Lobby.isGameStarted(): Boolean = game != null
-
-fun Lobby.pause() {
-    getGame().pause()
+fun Lobby.canBeReconnected(playerId: UUID): Boolean {
+    return disconnectedPLayers.contains(playerId)
 }
+
+fun Lobby.isGameStarted(): Boolean = game != null
 
 fun Lobby.startGame() {
     if (players.size < 2) {
@@ -99,13 +120,17 @@ fun Lobby.getGame(): Game {
 
 fun Lobby.getPlayersInGame(): List<SafeGamePLayer> {
     return getGame().playerSequence().map {
-        SafeGamePLayer(
-            name = players[it.id]!!.name,
-            number = it.number,
-            cards = it.cards,
-            coins = it.coins
-        )
+        it.toSafeGamePlayer(players[it.id]!!.name)
     }.toList()
+}
+
+fun Player.toSafeGamePlayer(name: String): SafeGamePLayer {
+    return SafeGamePLayer(
+        name = name,
+        number = this.number,
+        cards = this.cards,
+        coins = this.coins
+    )
 }
 
 fun Lobby.getPlayerInLobby(playerId: UUID): SafeLobbyPlayer {
@@ -138,19 +163,6 @@ fun Lobby.finishRound() {
         players[playerId]!!.score.add(playerResult.score)
     }
     game = null
-}
-
-fun Lobby.addPlayer(playerId: UUID, name: String) {
-    if (!this.players.containsKey(playerId)) {
-        if (players.size >= params.maxPlayerNumber) {
-            throw PlayerException("Lobby is Filled", gameId, playerId)
-        }
-        this.players[playerId] = LobbyPlayer(
-            id = playerId,
-            number = this.players.values.maxOfOrNull { it.number }?.plus(1) ?: 0,
-            name = name,
-        )
-    }
 }
 
 fun Lobby.createGame(): Game {

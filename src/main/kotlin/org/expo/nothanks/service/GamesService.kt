@@ -3,6 +3,7 @@ package org.expo.nothanks.service
 import org.expo.nothanks.exception.GameHasNotBeenFound
 import org.expo.nothanks.exception.InviteHasNotBeenFound
 import org.expo.nothanks.model.event.input.NewParams
+import org.expo.nothanks.model.event.output.SafeLobbyPlayer
 import org.expo.nothanks.model.lobby.Lobby
 import org.expo.nothanks.utils.*
 import org.springframework.stereotype.Service
@@ -92,23 +93,25 @@ class GamesService {
         }
     }
 
-    fun addPlayerToLobby(gameId: UUID, playerId: UUID, name: String, operation: (Lobby) -> (Unit)) {
+    fun addPlayerToLobby(gameId: UUID, playerId: UUID, name: String, operation: (Lobby, Boolean) -> (Unit)) {
         changeGameWithLock(gameId) { lobby ->
-            if (lobby.isGameStarted()) {
+            if (lobby.canBeReconnected(playerId)) {
                 lobby.connectPlayer(playerId)
-            } else {
+                operation.invoke(lobby, false)
+            } else if (!lobby.playerAlreadyInGame(playerId)) {
                 lobby.addPlayer(playerId, name)
+                operation.invoke(lobby, true)
             }
             lobbyByUserId[playerId] = lobby
-            operation.invoke(lobby)
         }
     }
 
-    fun disconnectPlayerFromLobby(playerId: UUID) {
+    fun disconnectPlayerFromLobby(playerId: UUID, operation: (Lobby, SafeLobbyPlayer) -> (Unit)) {
         val gameId = gameIdByPlayerId(playerId)
         changeGameWithLock(gameId) { lobby ->
+            val disconnectedPlayer = lobby.getPlayerInLobby(playerId)
             lobby.disconnectPlayer(playerId)
-            if (lobby.isGameStarted()) {
+            if (lobby.canBeReconnected(playerId)) {
                 lobbyByUserId[playerId] = lobby
             } else {
                 lobbyByUserId.remove(playerId)
@@ -117,8 +120,10 @@ class GamesService {
                 }
             }
             if (lobby.shouldBeDeleted()) {
+                lobby.setNotActive()
                 deleteLobby(lobby)
             }
+            operation.invoke(lobby, disconnectedPlayer)
         }
     }
 
@@ -138,15 +143,6 @@ class GamesService {
         try {
             val game = gameIdToLobby[gameId] ?: throw GameHasNotBeenFound(gameId)
             return operation.invoke(game)
-        } finally {
-            readLock.unlock()
-        }
-    }
-
-    fun lobbyExist(gameId: UUID): Boolean {
-        readLock.lock()
-        try {
-            return gameIdToLobby.containsKey(gameId)
         } finally {
             readLock.unlock()
         }

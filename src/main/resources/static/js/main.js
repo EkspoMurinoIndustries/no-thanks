@@ -35,6 +35,10 @@ function connectAndSend(message) {
         return
     }
     message.name = name
+    if (sock !== undefined && stompClient !== undefined && !stompClient.connected) {
+        sock = new SockJS("/no-thanks");
+        stompClient = Stomp.over(sock);
+    }
     if (sock === undefined) {
         sock = new SockJS("/no-thanks");
     }
@@ -71,6 +75,15 @@ function processTopicMessage(message) {
     if (message['type'] === "LobbyConnectedMessage") {
         addPlayerToLobbyList(message['newPlayer'])
         $('#players-count').html(message['allPlayers'].length)
+    }
+    if (message['type'] === "PlayerLeftMessage") {
+        deletePlayerFromLobby(message['player'])
+    }
+    if (message['type'] === "PlayerDisconnectedMessage") {
+        playerDisconnected(message['player'])
+    }
+    if (message['type'] === "PlayerReconnectedMessage") {
+        playerReconnected(message['player'])
     }
     if (message['type'] === "RoundStartedMessage") {
         renderGameScreen(message.players, message['currentCard'], message['currentPlayerNumber'], message['remainingNumberCards'])
@@ -111,11 +124,10 @@ function processDirectInfoMessage(message) {
         stompClient.subscribe("/lobby/" + activeGameId, payload => {
             processTopicMessage(JSON.parse(payload.body))
         });
+        renderLobbyScreen(message['isCreator'], message['players'], message['inviteCode'], message['params'])
         if (message['isStarted'] === true) {
             let game = message['gameStatus']
             renderGameScreen(game.players, game['currentCard'], game['currentPlayerNumber'], game['remainingNumberCards'], game['currentCardCoin'])
-        } else {
-            renderLobbyScreen(message['isCreator'], message['players'], message['inviteCode'], message['params'])
         }
     }
 }

@@ -14,7 +14,8 @@ let currentCardBlock = $('#current-card')
 let currentCardCoinsBlock = $('#current-card-coins')
 let putCoinButton = $('#put-coin')
 let takeCardButton = $('#take-card')
-let errorMessage = $('<div class="error-message" id="error-message">\n' +
+let errorMessage =
+    $('<div class="error-message" id="error-message">\n' +
     '    <div class="error-message--appeared">\n' +
     '        <div class="error-message-box">\n' +
     '            <div class="error-message-text"><img src="img/error_logo.png" alt=""><br><span id="error-message-text">Oops, mistake</span></div>\n' +
@@ -51,13 +52,27 @@ function renderLobbyScreen(isCreator, players, lobbyInviteCode, params) {
 }
 
 function addPlayerToLobbyList(player) {
-    let playerClass = player.number === myNumber ? "\"players-li current-player\"" : "\"players-li\""
-    lobbyPlayersList.append($("<li class="+playerClass+">\n" +
-        "<div class=\"player-ava-block\"></div>\n" +
-        "<span class=\"nickname\">"+player.name+"</span>\n" +
-        "</li>"))
+    let playerClass = player.number === myNumber ? "players-li current-player" : "players-li"
+    lobbyPlayersList.append($(
+        `<li class="${playerClass}" id="lobby-player-li-${player.number}">
+            <div class="player-ava-block"></div>
+            <span class="nickname\">${player.name}</span>
+        </li>`))
 }
 
+function deletePlayerFromLobby(player) {
+    $(`#lobby-player-li-${player.number}`).remove()
+}
+
+function playerDisconnected(player) {
+    $(`#lobby-player-li-${player.number}`).addClass('disconnected-lobby-player')
+    $(`#other-player-block-${player.number}`).addClass('disconnected-game-player')
+}
+
+function playerReconnected(player) {
+    $(`#lobby-player-li-${player.number}`).removeClass('disconnected-lobby-player')
+    $(`#other-player-block-${player.number}`).removeClass('disconnected-game-player')
+}
 
 function renderAuthScreen() {
     createAndConnectScreen.hide()

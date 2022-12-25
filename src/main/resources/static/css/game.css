@@ -111,6 +111,11 @@
         linear-gradient(to bottom, #353192, #ac9efa) border-box;
 }
 
+.player-card.disconnected-game-player{
+    background: linear-gradient(to right, #8a8aa5, #9b9b9b) padding-box,
+    linear-gradient(to bottom, #868695, #74737d) border-box;
+}
+
 #player-cards .card-item {
     float: left;
     font-size: 25px;
