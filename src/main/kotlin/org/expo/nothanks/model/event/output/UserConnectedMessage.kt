@@ -27,6 +27,6 @@ data class GameStatus(
     val currentCardCoin: Int,
     val isCurrentPlayer: Boolean,
     val remainingNumberCards: Int,
-    val players: List<SafeGamePLayer>,
+    val players: List<SafeGamePlayer>,
     val currentPlayerNumber: Int
 )

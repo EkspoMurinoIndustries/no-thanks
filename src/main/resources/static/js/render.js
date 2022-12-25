@@ -60,9 +60,15 @@ function addPlayerToLobbyList(player) {
         </li>`))
 }
 
-function deletePlayerFromLobby(player) {
+function deletePlayerFromLobby(player, newNumber) {
+    updatePlayerCountInLobby(newNumber)
     $(`#lobby-player-li-${player.number}`).remove()
 }
+
+function updatePlayerCountInLobby(newNumber) {
+    $('#players-count').html(newNumber)
+}
+
 
 function playerDisconnected(player) {
     $(`#lobby-player-li-${player.number}`).addClass('disconnected-lobby-player')

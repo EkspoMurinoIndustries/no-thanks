@@ -37,7 +37,8 @@ class NotificationService(
     fun playerLeft(lobby: Lobby, player: SafeLobbyPlayer) {
         messageToTopic(lobby, PlayerLeftMessage(
             player = player,
-            isGameStarted = lobby.isGameStarted()
+            isGameStarted = lobby.isGameStarted(),
+            remainingPlayersNumber = lobby.players.size
         ))
     }
 

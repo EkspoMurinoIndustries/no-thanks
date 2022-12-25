@@ -5,7 +5,7 @@ import org.expo.nothanks.exception.PlayerException
 import org.expo.nothanks.model.event.output.GameStatus
 import org.expo.nothanks.model.event.output.SafeLobbyPlayer
 import org.expo.nothanks.model.event.input.NewParams
-import org.expo.nothanks.model.event.output.SafeGamePLayer
+import org.expo.nothanks.model.event.output.SafeGamePlayer
 import org.expo.nothanks.model.event.output.Score
 import org.expo.nothanks.model.game.Game
 import org.expo.nothanks.model.game.Player
@@ -118,14 +118,14 @@ fun Lobby.getGame(): Game {
     return game!!
 }
 
-fun Lobby.getPlayersInGame(): List<SafeGamePLayer> {
+fun Lobby.getPlayersInGame(): List<SafeGamePlayer> {
     return getGame().playerSequence().map {
         it.toSafeGamePlayer(players[it.id]!!.name)
     }.toList()
 }
 
-fun Player.toSafeGamePlayer(name: String): SafeGamePLayer {
-    return SafeGamePLayer(
+fun Player.toSafeGamePlayer(name: String): SafeGamePlayer {
+    return SafeGamePlayer(
         name = name,
         number = this.number,
         cards = this.cards,

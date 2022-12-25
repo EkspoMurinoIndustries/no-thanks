@@ -74,10 +74,10 @@ function connectGame() {
 function processTopicMessage(message) {
     if (message['type'] === "LobbyConnectedMessage") {
         addPlayerToLobbyList(message['newPlayer'])
-        $('#players-count').html(message['allPlayers'].length)
+        updatePlayerCountInLobby(message['allPlayers'].length)
     }
     if (message['type'] === "PlayerLeftMessage") {
-        deletePlayerFromLobby(message['player'])
+        deletePlayerFromLobby(message['player'], message['remainingPlayersNumber'])
     }
     if (message['type'] === "PlayerDisconnectedMessage") {
         playerDisconnected(message['player'])
