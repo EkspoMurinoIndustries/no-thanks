@@ -27,12 +27,18 @@ class NotificationService(
         messageToTopic(gameId, LobbyClosedMessage())
     }
 
-    fun playerDisconnected(lobby: Lobby, playerId: UUID) {
-        val playerInLobby = lobby.getPlayerInLobby(playerId)
+    fun playerDisconnected(lobby: Lobby, player: SafeLobbyPlayer) {
         messageToTopic(lobby, PlayerDisconnectedMessage(
-            playerName = playerInLobby.name,
-            playerNumber = playerInLobby.number,
+            player = player,
             isGameStarted = lobby.isGameStarted()
+        ))
+    }
+
+    fun playerLeft(lobby: Lobby, player: SafeLobbyPlayer) {
+        messageToTopic(lobby, PlayerLeftMessage(
+            player = player,
+            isGameStarted = lobby.isGameStarted(),
+            remainingPlayersNumber = lobby.players.size
         ))
     }
 
@@ -43,12 +49,13 @@ class NotificationService(
         ))
     }
 
-    fun gameConnection(lobby: Lobby, playerId: UUID) {
+    fun reconnect(lobby: Lobby, playerId: UUID) {
         val playerInLobby = lobby.getPlayerInLobby(playerId)
+        val gameInfo = lobby.game?.getPlayer(playerId)?.toSafeGamePlayer(playerInLobby.name)
         messageToTopic(lobby, PlayerReconnectedMessage(
-            playerName = playerInLobby.name,
-            playerNumber = playerInLobby.number,
-            canContinue = lobby.getGame().isValid()
+            gameStarted = lobby.isGameStarted(),
+            player = playerInLobby,
+            gameInfo = gameInfo
         ))
     }
 

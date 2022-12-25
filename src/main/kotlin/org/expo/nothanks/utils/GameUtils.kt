@@ -57,10 +57,6 @@ fun Game.calculateResult(): Map<UUID, PlayerResult> {
         .associate { it.id to PlayerResult(calculateCards(it.cards) - it.coins) }
 }
 
-fun Game.continueGame() {
-    this.status = GameStatusEnum.STARTED
-}
-
 fun Game.currentCard(): Int {
     return deck.cards[deck.skip]
 }
@@ -89,10 +85,6 @@ fun calculateCards(cards: Set<Int>): Int {
 
 fun Game.remainingNumberCards(): Int {
     return deck.cards.size - deck.skip - 1
-}
-
-fun Game.pause() {
-    status = GameStatusEnum.PAUSED
 }
 
 fun Game.currentCardNumber() = deck.cards[deck.skip]
