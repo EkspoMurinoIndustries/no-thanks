@@ -299,6 +299,11 @@ textarea:focus, input:focus {
     margin-bottom: 15px;
 }
 
+.disconnected-lobby-player {
+    background: linear-gradient(to right, #8a8aa5, #9b9b9b) padding-box,
+                linear-gradient(to bottom, #868695, #74737d) border-box;
+}
+
 
 
 

@@ -35,11 +35,11 @@ class GameController(
             gamesService.gameIdByInviteCode(message.inviteCode ?: throw NoThanksException("Empty invite code"))
         }
         lateinit var response: UserConnectedMessage
-        gamesService.addPlayerToLobby(gameId, token, message.name) { lobby ->
-            if (lobby.isGameStarted()) {
-                notificationService.gameConnection(lobby, token)
-            } else {
+        gamesService.addPlayerToLobby(gameId, token, message.name) { lobby, newPlayer ->
+            if (newPlayer) {
                 notificationService.lobbyConnection(lobby, token)
+            } else {
+                notificationService.reconnect(lobby, token)
             }
             response = UserConnectedMessage(
                 isStarted = lobby.isGameStarted(),
