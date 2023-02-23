@@ -105,6 +105,11 @@ function processTopicMessage(message) {
     if (message['type'] === "EndRoundMessage") {
         renderEndRoundScreen(message.result)
     }
+    if (message['type'] === "PlayerNameChangedMessage") {
+        console.log(message)
+        renderNewName(message)
+    }
+
 }
 
 function processDirectMessage(message) {
@@ -113,6 +118,10 @@ function processDirectMessage(message) {
     }
     if (message['type'] === "PlayerPersonalInfoMessage") {
         updatePersonalInfo(message.coins, message.cards, message['isCurrentPlayer']);
+    }
+    if (message['type'] === "PersonalPlayerNameChangedMessage") {
+        console.log(message)
+        Cookies.set('no-thanks-name', message['newName'])
     }
 }
 
@@ -166,4 +175,9 @@ function returnToLobby() {
     authScreen.hide()
     gameScreen.hide()
     $('#result-screen').hide()
+}
+
+function changeName() {
+    stompClient.send('/app/lobby/input/name', {}, JSON.stringify({newName: $('#newName')[0].value}))
+    $('#new-name-block').remove()
 }

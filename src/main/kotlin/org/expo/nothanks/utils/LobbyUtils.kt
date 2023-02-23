@@ -209,3 +209,11 @@ fun Lobby.reset() {
         it.score.clear()
     }
 }
+
+fun Lobby.getPlayer(playerId: UUID): LobbyPlayer {
+    return players[playerId] ?: throw PlayerException("Player has not been found", gameId, playerId)
+}
+
+fun Lobby.changePlayerName(playerId: UUID, newName: String) {
+    getPlayer(playerId).name = newName
+}

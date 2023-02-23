@@ -23,6 +23,16 @@ let errorMessage =
     '        </div>\n' +
     '    </div>\n' +
     '</div>')
+let changeNameBlock =
+    $('<div class="error-message" id="new-name-block">\n' +
+        '    <div class="error-message--appeared">\n' +
+        '        <div class="changename-message-box">\n' +
+        '            <div class="error-message-text"><br><span id="error-message-text">New name</span></div>\n' +
+        '            <input class="input" type="text" id="newName" name="newName" autofocus>' +
+        '            <button class="button error-message-button" onclick="changeName(this); return false;">OK</button>\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '</div>')
 let gameButtons = $('#game-buttons-block')
 
 function renderAuthAndCreateConnectScreen() {
@@ -63,11 +73,15 @@ function renderLobbyScreen(isCreator, players, lobbyInviteCode, params) {
 
 function addPlayerToLobbyList(player) {
     let playerClass = player.number === myNumber ? "players-li current-player" : "players-li"
+    let clickable = player.number === myNumber ? "onclick=\"renderChangeNameBlock(); return false;\"" : ""
     lobbyPlayersList.append($(
         `<li class="${playerClass}" id="lobby-player-li-${player.number}">
             <div class="player-ava-block"></div>
-            <span class="nickname\">${player.name}</span>
+            <span id="lobby-player-li-span-${player.number}" ${clickable} class="nickname\">${player.name}</span>
         </li>`))
+}
+function renderChangeNameBlock() {
+    $('body').append(changeNameBlock);
 }
 
 function deletePlayerFromLobby(player, newNumber) {
@@ -262,4 +276,8 @@ function setCurrentTurnPlayer(newCurrentPlayerNumber) {
     if (newCurrentPlayerNumber !== myNumber) {
         $(`#other-player-block-${newCurrentPlayerNumber}`).addClass('turn')
     }
+}
+
+function renderNewName(message) {
+    $(`#lobby-player-li-span-${message['playerNumber']}`).text(message['newName'])
 }
