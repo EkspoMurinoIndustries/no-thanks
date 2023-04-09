@@ -115,9 +115,13 @@ class GameController(
         val playerId = principal.getPlayerId()
         val gameId = gamesService.gameIdByPlayerId(playerId)
         gamesService.changeGameWithLock(gameId) { lobby ->
-            lobby.changePlayerName(playerId, message.newName)
-            notificationService.updatePlayerName(lobby, playerId, message.newName)
-            notificationService.updatePersonalPlayerName(lobby, playerId, message.newName)
+            var newPlayerName = message.newName
+            if (newPlayerName.length > 12) {
+                newPlayerName = newPlayerName.substring(0, 12)
+            }
+            lobby.changePlayerName(playerId, newPlayerName)
+            notificationService.updatePlayerName(lobby, playerId, newPlayerName)
+            notificationService.updatePersonalPlayerName(lobby, playerId, newPlayerName)
         }
     }
 
