@@ -5,6 +5,6 @@ import java.util.*
 data class LobbyPlayer(
     val id: UUID,
     val number: Int,
-    val name: String,
+    var name: String,
     val score: MutableList<Int> = mutableListOf()
 )

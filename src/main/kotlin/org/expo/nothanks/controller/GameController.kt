@@ -3,6 +3,7 @@ package org.expo.nothanks.controller
 
 import mu.KLogging
 import org.expo.nothanks.exception.NoThanksException
+import org.expo.nothanks.model.event.input.ChangeNameMessage
 import org.expo.nothanks.model.event.output.UserConnectedMessage
 import org.expo.nothanks.model.event.input.ConnectToGameMessage
 import org.expo.nothanks.model.event.input.GameChangingMessage
@@ -106,6 +107,21 @@ class GameController(
         } catch (e: NoThanksException) {
             logger.error("Action error", e)
             notificationService.sendErrorToUser(gameId, playerId, e.publicMessage)
+        }
+    }
+
+    @MessageMapping("/lobby/input/name")
+    fun name(@Payload message: ChangeNameMessage, principal: Principal) {
+        val playerId = principal.getPlayerId()
+        val gameId = gamesService.gameIdByPlayerId(playerId)
+        gamesService.changeGameWithLock(gameId) { lobby ->
+            var newPlayerName = message.newName
+            if (newPlayerName.length > 12) {
+                newPlayerName = newPlayerName.substring(0, 12)
+            }
+            lobby.changePlayerName(playerId, newPlayerName)
+            notificationService.updatePlayerName(lobby, playerId, newPlayerName)
+            notificationService.updatePersonalPlayerName(lobby, playerId, newPlayerName)
         }
     }
 

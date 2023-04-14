@@ -100,6 +100,19 @@ class NotificationService(
         updateInfo(lobby, lobby.getGame().previousPlayer().id)
     }
 
+    fun updatePlayerName(lobby: Lobby, playerId: UUID, newName: String) {
+        messageToTopic(lobby, PlayerNameChangedMessage (
+            newName = newName,
+            playerNumber = lobby.getPlayer(playerId).number
+        ))
+    }
+
+    fun updatePersonalPlayerName(lobby: Lobby, playerId: UUID, newName: String) {
+        messageToUser(lobby, playerId, PersonalPlayerNameChangedMessage (
+            newName = newName
+        ))
+    }
+
     fun updateInfo(lobby: Lobby, playerId: UUID) {
         val player = lobby.getGame().getPlayer(playerId)
         messageToUser(lobby, playerId, PlayerPersonalInfoMessage(

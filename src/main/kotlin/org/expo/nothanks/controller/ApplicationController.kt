@@ -17,7 +17,8 @@ class ApplicationController() {
         @RequestBody authorizationRequest: AuthorizationRequest,
         response: HttpServletResponse
     ): UserInfo {
-        if (authorizationRequest.name.isBlank()) {
+        var playerName = authorizationRequest.name
+        if (playerName.isBlank()) {
             throw SomethingWentWrong("Name is blank")
         }
         val token = UUID.randomUUID()
@@ -25,7 +26,11 @@ class ApplicationController() {
             it.maxAge = Int.MAX_VALUE
             it.path = "/"
         }
-        val c2 = Cookie("no-thanks-name", authorizationRequest.name).also {
+
+        if (playerName.length > 12) {
+            playerName = playerName.substring(0, 12)
+        }
+        val c2 = Cookie("no-thanks-name", playerName).also {
             it.maxAge = Int.MAX_VALUE
             it.path = "/"
         }
