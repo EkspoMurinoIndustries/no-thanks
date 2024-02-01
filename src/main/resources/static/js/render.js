@@ -13,7 +13,6 @@ let currentPlayerCards = $('#player-cards')
 let currentCardBlock = $('#current-card')
 let currentCardCoinsBlock = $('#current-card-coins')
 let putCoinButton = $('#put-coin')
-let takeCardButton = $('#take-card')
 let errorMessage =
     $('<div class="error-message" id="error-message">\n' +
     '    <div class="error-message--appeared">\n' +
@@ -23,6 +22,33 @@ let errorMessage =
     '        </div>\n' +
     '    </div>\n' +
     '</div>')
+let rules =
+    $('<div class="error-message" id="rules">\n' +
+        '    <div class="error-message--appeared">\n' +
+        '        <div class="changename-message-box">\n' +
+        '            <div class="rules-message-text"><br><p>' +
+        '<h3 style="margin-bottom: 0.2em">Game objective</h3> ' +
+        'To score the fewest points; players score points each time they collect a number and subtract points for each counter they hold at the end of the game.<br>' +
+        '<h3 style="margin-bottom: 0.2em; margin-top: 0.2em">Game proccess</h3> ' +
+        'Players make turns one after another. There is a common stack of numbers in front of players with a top number revealed. ' +
+        'The stack consists of 33 consecutive numbers from 3 to 35, <b>with nine random numbers removed each round. </b><br>' +
+        'During turn, a number is presented to a player. ' +
+        'The player has two options:<br>' +
+        '<b>1)</b> Take the number by pressing the <b>"Take number"</b> button. In this case, the player is scored these penalty points. ' +
+        'The number remains in player`s possesion until the end of the round and is public. Any counters collected on the number are also received. ' +
+        'After taking the number, the next number in the stack is revealed and the player must make the same choice. <br>' +
+        '<b>2)</b> Say <b>"No Thanks!"</b> so you don`t have to take the number by pressing the corresponding button. ' +
+        'In this case, a counter must be put on the number and the turn continues to the next player. ' +
+        'If you have no counters - the only choice is to take the number.<br>' +
+        'The game ends when there is no numbers left in the stack. <br>' +
+        '<b>Important note: If you take consecutive numbers, only the lowest number in the series will count against you. </b><br>' +
+        'The number of counters you have is shown on the left of your collected numbers. ' +
+        'The number of counters collected on the number is shown to the right-bottom of it, while the number of ' +
+        'remaining numbers in the stack - to the right-top. </p></div>\n' +
+        '            <button class="button error-message-button" onclick="closeRules(); return false;">OK</button>\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '</div>')
 let changeNameBlock =
     $('<div class="error-message" id="new-name-block">\n' +
         '    <div class="error-message--appeared">\n' +
@@ -82,6 +108,10 @@ function addPlayerToLobbyList(player) {
 }
 function renderChangeNameBlock() {
     $('body').append(changeNameBlock);
+}
+
+function renderRulesBlock() {
+    $('body').append(rules);
 }
 
 function deletePlayerFromLobby(player, newNumber) {
@@ -196,6 +226,10 @@ function renderCards(cards) {
 
 function closeErrorMessage(){
     errorMessage.remove();
+}
+
+function closeRules(){
+    rules.remove();
 }
 
 function showErrorMessage(){

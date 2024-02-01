@@ -68,7 +68,7 @@ textarea:focus, input:focus {
     linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
     border: 3px solid transparent;
     border-radius: 10px;
-    font-size: 30px;
+    font-size: 25px;
     font-family: 'Fredoka One', sans-serif;
     box-shadow: 2px 5px 0 rgba(36, 34, 125, 0.8);
     margin: auto;
@@ -304,6 +304,18 @@ textarea:focus, input:focus {
     font-size: 25px;
     margin-top: 20px;
     text-align: center;
+}
+
+.rules-message-text {
+    font-size: 15px;
+    text-align: left;
+    margin: 1em 1em 1em;
+}
+
+.rules-button{
+    background: linear-gradient(to right, #a3adff, #a3adff) padding-box, linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
+    color: #502d9b;
+    letter-spacing: 0.05em
 }
 
 .error-message-text img {
