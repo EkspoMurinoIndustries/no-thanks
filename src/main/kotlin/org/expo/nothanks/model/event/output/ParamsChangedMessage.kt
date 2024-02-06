@@ -1,7 +1,7 @@
 package org.expo.nothanks.model.event.output
 
-import org.expo.nothanks.model.lobby.Params
+import org.expo.nothanks.model.lobby.GameParams
 
 data class ParamsChangedMessage(
-    val newParams: Params
+    val newParams: GameParams
 ) : OutputMessage

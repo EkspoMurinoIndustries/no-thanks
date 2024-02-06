@@ -1,9 +1,11 @@
 package org.expo.nothanks.service
 
+import org.expo.nothanks.config.properties.DefaultGameProperties
 import org.expo.nothanks.exception.GameHasNotBeenFound
 import org.expo.nothanks.exception.InviteHasNotBeenFound
 import org.expo.nothanks.model.event.input.NewParams
 import org.expo.nothanks.model.event.output.SafeLobbyPlayer
+import org.expo.nothanks.model.lobby.GameParams
 import org.expo.nothanks.model.lobby.Lobby
 import org.expo.nothanks.utils.*
 import org.springframework.stereotype.Service
@@ -13,7 +15,7 @@ import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 @Service
-class GamesService {
+class GamesService(val defaultGameProperties: DefaultGameProperties) {
 
     private val readWriteLock: ReadWriteLock = ReentrantReadWriteLock()
     private val writeLock: Lock = readWriteLock.writeLock()
@@ -51,6 +53,7 @@ class GamesService {
             val lobby = Lobby(
                 creator = creator,
                 inviteCode = inviteCode,
+                params = getGameParams()
             )
             gameIdToLobby[lobby.gameId] = lobby
             inviteCodeToLobby[lobby.inviteCode] = lobby
@@ -63,7 +66,7 @@ class GamesService {
     fun startNewRound(gameId: UUID, playerId: UUID, operation: (Lobby) -> (Unit)) {
         changeGameWithLock(gameId) {
             checkOnLobbyChange(it, playerId)
-            it.startGame()
+            it.startGame(getGameParams())
             operation.invoke(it)
         }
     }
@@ -176,4 +179,12 @@ class GamesService {
         }
     }
 
+    private fun getGameParams() : GameParams = GameParams(
+        defaultCoinsCount = defaultGameProperties.defaultCoinsCount,
+        minCard = defaultGameProperties.minCard,
+        maxCard = defaultGameProperties.maxCard,
+        extraCards = defaultGameProperties.extraCards,
+        maxPlayerNumber = defaultGameProperties.maxPlayerNumber,
+        coinsMap = defaultGameProperties.coinsMap
+    )
 }

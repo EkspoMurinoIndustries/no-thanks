@@ -1,13 +1,13 @@
 package org.expo.nothanks.utils
 
 import org.expo.nothanks.model.game.Deck
-import org.expo.nothanks.model.lobby.Params
+import org.expo.nothanks.model.lobby.GameParams
 import org.springframework.messaging.simp.user.SimpUserRegistry
 import java.util.*
 
 private val charPool = ('A'..'Z')
 
-fun createDeck(params: Params): Deck {
+fun createDeck(params: GameParams): Deck {
     val cardCount = params.maxCard - params.minCard + 1
     return Deck(
         cards = (params.minCard..params.maxCard)

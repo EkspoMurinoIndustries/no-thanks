@@ -9,6 +9,7 @@ import org.expo.nothanks.model.event.output.SafeGamePlayer
 import org.expo.nothanks.model.event.output.Score
 import org.expo.nothanks.model.game.Game
 import org.expo.nothanks.model.game.Player
+import org.expo.nothanks.model.lobby.GameParams
 import org.expo.nothanks.model.lobby.Lobby
 import org.expo.nothanks.model.lobby.LobbyPlayer
 import java.util.*
@@ -104,11 +105,11 @@ fun Lobby.canBeReconnected(playerId: UUID): Boolean {
 
 fun Lobby.isGameStarted(): Boolean = game != null
 
-fun Lobby.startGame() {
+fun Lobby.startGame(gameParams: GameParams) {
     if (players.size < 2) {
         throw GameException("Sorry, you can't play alone", gameId)
     }
-    game = createGame()
+    game = createGame(gameParams)
 }
 
 fun Lobby.getGame(): Game {
@@ -165,24 +166,24 @@ fun Lobby.finishRound() {
     game = null
 }
 
-fun Lobby.createGame(): Game {
-    val players = this.players.values.map {
+fun Lobby.createGame(gameParams: GameParams): Game {
+    val gamePlayers = players.values.map {
         Player(
             id = it.id,
             number = it.number,
-            coins = params.defaultCoinsCount
+            coins = gameParams.coinsMap[players.size] ?: gameParams.defaultCoinsCount
         )
     }.shuffled().toList()
-    for (i: Int in 1 until players.size) {
-        players[i - 1].nextPlayer = players[i]
+    for (i: Int in 1 until gamePlayers.size) {
+        gamePlayers[i - 1].nextPlayer = gamePlayers[i]
     }
-    players.last().nextPlayer = players[0]
+    gamePlayers.last().nextPlayer = gamePlayers[0]
     return Game(
-        currentPlayer = players[0],
+        currentPlayer = gamePlayers[0],
         id = this.gameId,
         inviteCode = inviteCode,
         deck = createDeck(this.params),
-        playerCount = players.size
+        playerCount = gamePlayers.size
     )
 }
 
