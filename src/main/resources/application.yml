@@ -2,3 +2,18 @@ no-thanks:
   cookies:
     id: no-thanks-token
     name: no-thanks-name
+  default-game-params:
+    default-coins-count: 7
+    min-card: 3
+    max-card: 35
+    extra-cards: 9
+    min-player-number: 2
+    max-player-number: 7
+    coins-map:
+      1: 11
+      2: 11
+      3: 11
+      4: 11
+      5: 11
+      6: 9
+      7: 7

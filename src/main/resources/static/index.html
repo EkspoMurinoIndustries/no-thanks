@@ -14,6 +14,9 @@
 </head>
 <body>
 <div class="background">
+    <div class="rules-button-div">
+        <button class="button rules-button" type="button" onclick="renderRulesBlock(); return false;">Rules</button>
+    </div>
     <div id="auth-screen">
         <div class="outer-border">
             <div id="auth-block">
@@ -72,9 +75,6 @@
                         <button class="button" id="start-game-button" type="button" onclick="startGame(); return false;">Start Game</button>
                     </div>
                 </div>
-                <div>
-                    <button class="button rules-button" type="button" onclick="renderRulesBlock(); return false;">Rules</button>
-                </div>
             </div>
         </div>
     </div>
@@ -103,11 +103,6 @@
             <div class="game-buttons-block" id="game-buttons-block">
                 <button class="button" id="put-coin" type="button" onclick="putCoin(); return false;">No, Thanks!</button>
                 <button class="button" id="take-card" type="button" onclick="takeCard(); return false;">Take Number</button>
-            </div>
-            <div>
-                <button class="button rules-button" style="
-                margin-block-start: 1em;
-                " type="button" onclick="renderRulesBlock(); return false;">Rules</button>
             </div>
     </div>
     <div id="result-screen">

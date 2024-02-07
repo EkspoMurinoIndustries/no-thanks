@@ -1,6 +1,6 @@
 package org.expo.nothanks.model.event.output
 
-import org.expo.nothanks.model.lobby.Params
+import org.expo.nothanks.model.lobby.GameParams
 import java.util.*
 
 data class UserConnectedMessage(
@@ -10,7 +10,7 @@ data class UserConnectedMessage(
     val isCreator: Boolean = false,
     val playerNumber: Int,
     val gameStatus: GameStatus? = null,
-    val params: Params,
+    val params: GameParams,
     val inviteCode: String
 ) : OutputMessage
 

@@ -8,7 +8,7 @@ data class Lobby(
     val disconnectedPLayers: MutableSet<UUID> = mutableSetOf(),
     val players: MutableMap<UUID, LobbyPlayer> = mutableMapOf(),
     val inviteCode: String,
-    val params: Params = Params(),
+    val params: GameParams,
     val gameId: UUID = UUID.randomUUID(),
     var game: Game? = null,
     var round: Int = 0,

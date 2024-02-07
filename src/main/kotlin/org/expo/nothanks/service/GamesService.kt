@@ -1,9 +1,12 @@
 package org.expo.nothanks.service
 
+import org.expo.nothanks.config.properties.DefaultGameProperties
+import org.expo.nothanks.exception.GameException
 import org.expo.nothanks.exception.GameHasNotBeenFound
 import org.expo.nothanks.exception.InviteHasNotBeenFound
 import org.expo.nothanks.model.event.input.NewParams
 import org.expo.nothanks.model.event.output.SafeLobbyPlayer
+import org.expo.nothanks.model.lobby.GameParams
 import org.expo.nothanks.model.lobby.Lobby
 import org.expo.nothanks.utils.*
 import org.springframework.stereotype.Service
@@ -13,7 +16,7 @@ import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 @Service
-class GamesService {
+class GamesService(private val gameProperties: DefaultGameProperties) {
 
     private val readWriteLock: ReadWriteLock = ReentrantReadWriteLock()
     private val writeLock: Lock = readWriteLock.writeLock()
@@ -51,6 +54,7 @@ class GamesService {
             val lobby = Lobby(
                 creator = creator,
                 inviteCode = inviteCode,
+                params = getDefaultGameParams()
             )
             gameIdToLobby[lobby.gameId] = lobby
             inviteCodeToLobby[lobby.inviteCode] = lobby
@@ -63,7 +67,11 @@ class GamesService {
     fun startNewRound(gameId: UUID, playerId: UUID, operation: (Lobby) -> (Unit)) {
         changeGameWithLock(gameId) {
             checkOnLobbyChange(it, playerId)
-            it.startGame()
+            if (it.players.size < gameProperties.minPlayerNumber) {
+                throw GameException("Sorry, minimum number of players is ${gameProperties.minPlayerNumber}", gameId)
+            }
+            it.params.initialCoinsCount = gameProperties.coinsMap[it.players.size] ?: gameProperties.defaultCoinsCount
+            it.createNewGame()
             operation.invoke(it)
         }
     }
@@ -98,7 +106,7 @@ class GamesService {
             if (lobby.canBeReconnected(playerId)) {
                 lobby.connectPlayer(playerId)
                 operation.invoke(lobby, false)
-            } else if (!lobby.playerAlreadyInGame(playerId)) {
+            } else if (!lobby.playerAlreadyInGame(playerId) && lobby.players.count() < gameProperties.maxPlayerNumber) {
                 lobby.addPlayer(playerId, name)
                 operation.invoke(lobby, true)
             }
@@ -138,16 +146,6 @@ class GamesService {
         }
     }
 
-    fun <T> readGameWithLock(gameId: UUID, operation: (Lobby) -> T): T {
-        readLock.lock()
-        try {
-            val game = gameIdToLobby[gameId] ?: throw GameHasNotBeenFound(gameId)
-            return operation.invoke(game)
-        } finally {
-            readLock.unlock()
-        }
-    }
-
     fun gameIdByInviteCode(inviteCode: String): UUID {
         readLock.lock()
         try {
@@ -176,4 +174,11 @@ class GamesService {
         }
     }
 
+    private fun getDefaultGameParams() : GameParams = GameParams(
+        initialCoinsCount = gameProperties.defaultCoinsCount,
+        minCard = gameProperties.minCard,
+        maxCard = gameProperties.maxCard,
+        extraCards = gameProperties.extraCards,
+        maxPlayerNumber = gameProperties.maxPlayerNumber
+    )
 }
