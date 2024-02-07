@@ -1,10 +1,9 @@
 package org.expo.nothanks.model.lobby
 
 data class GameParams(
-    var defaultCoinsCount: Int,
+    var initialCoinsCount: Int,
     var minCard: Int,
     var maxCard: Int,
     var extraCards: Int,
-    var maxPlayerNumber: Int,
-    var coinsMap: Map<Int, Int>
+    var maxPlayerNumber: Int
 )

@@ -10,6 +10,7 @@ data class DefaultGameProperties (
     val minCard: Int,
     val maxCard: Int,
     val extraCards: Int,
+    val minPlayerNumber: Int,
     val maxPlayerNumber: Int,
     val coinsMap: Map<Int, Int>
 )

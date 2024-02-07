@@ -9,7 +9,6 @@ import org.expo.nothanks.model.event.output.SafeGamePlayer
 import org.expo.nothanks.model.event.output.Score
 import org.expo.nothanks.model.game.Game
 import org.expo.nothanks.model.game.Player
-import org.expo.nothanks.model.lobby.GameParams
 import org.expo.nothanks.model.lobby.Lobby
 import org.expo.nothanks.model.lobby.LobbyPlayer
 import java.util.*
@@ -34,9 +33,6 @@ fun Lobby.playerAlreadyInGame(playerId: UUID): Boolean {
 
 fun Lobby.addPlayer(playerId: UUID, name: String): Boolean {
     if (!this.players.containsKey(playerId)) {
-        if (players.size >= params.maxPlayerNumber) {
-            throw PlayerException("Lobby is filled", gameId, playerId)
-        }
         this.players[playerId] = LobbyPlayer(
             id = playerId,
             number = this.players.values.maxOfOrNull { it.number }?.plus(1) ?: 0,
@@ -105,13 +101,6 @@ fun Lobby.canBeReconnected(playerId: UUID): Boolean {
 
 fun Lobby.isGameStarted(): Boolean = game != null
 
-fun Lobby.startGame(gameParams: GameParams) {
-    if (players.size < 2) {
-        throw GameException("Sorry, you can't play alone", gameId)
-    }
-    game = createGame(gameParams)
-}
-
 fun Lobby.getGame(): Game {
     if (game == null) {
         throw GameException("Game has not been started", gameId)
@@ -166,19 +155,19 @@ fun Lobby.finishRound() {
     game = null
 }
 
-fun Lobby.createGame(gameParams: GameParams): Game {
+fun Lobby.createNewGame() {
     val gamePlayers = players.values.map {
         Player(
             id = it.id,
             number = it.number,
-            coins = gameParams.coinsMap[players.size] ?: gameParams.defaultCoinsCount
+            coins = params.initialCoinsCount
         )
     }.shuffled().toList()
     for (i: Int in 1 until gamePlayers.size) {
         gamePlayers[i - 1].nextPlayer = gamePlayers[i]
     }
     gamePlayers.last().nextPlayer = gamePlayers[0]
-    return Game(
+    game = Game(
         currentPlayer = gamePlayers[0],
         id = this.gameId,
         inviteCode = inviteCode,
@@ -201,7 +190,7 @@ fun Lobby.getResult(): Map<Int, Score> {
 fun Lobby.updateParams(newParams: NewParams) {
     params.maxCard = newParams.maxCard ?: params.maxCard
     params.minCard = newParams.minCard ?: params.minCard
-    params.defaultCoinsCount = newParams.defaultCoinsCount ?: params.defaultCoinsCount
+    params.initialCoinsCount = newParams.defaultCoinsCount ?: params.initialCoinsCount
     params.extraCards = newParams.extraCards ?: params.extraCards
 }
 
