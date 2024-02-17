@@ -3,12 +3,12 @@ no-thanks:
     id: no-thanks-token
     name: no-thanks-name
   default-game-params:
-    default-coins-count: 7
+    default-coins-count: 6
     min-card: 3
     max-card: 35
     extra-cards: 9
     min-player-number: 2
-    max-player-number: 7
+    max-player-number: 8
     coins-map:
       1: 11
       2: 11
@@ -17,3 +17,4 @@ no-thanks:
       5: 11
       6: 9
       7: 7
+      8: 6
