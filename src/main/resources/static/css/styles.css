@@ -73,7 +73,7 @@ textarea:focus, input:focus {
     font-family: 'Fredoka One', sans-serif;
     box-shadow: 2px 5px 0 rgba(36, 34, 125, 0.8);
     margin: auto;
-    padding: 0 20px;
+    padding: 0 10px;
 }
 
 .button:hover {
