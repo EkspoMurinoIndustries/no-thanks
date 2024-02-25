@@ -248,7 +248,7 @@ function renderEndRoundScreen(results) {
     gameScreen.hide()
     $('#result-table').html('')
     $('#result-screen').show()
-    Object.values(results).sort((a, b) => b.totalScore - a.totalScore).forEach(addResultRow)
+    Object.values(results).sort((a, b) => a.totalScore - b.totalScore).forEach(addResultRow)
 }
 
 function addResultRow(playerResultValue) {
