@@ -1,159 +1,289 @@
 # Application deployment
 
-This doc contains the instructions how to setup server for the current deploy approach.
+This document describes how to set up a server for the current deployment approach.
 
-> :warning: This approach is not perfect and should be significantly improved in the future.
+> **Warning:** This is a deliberately simple deployment and can be improved in the future.
 
-We use a simple systemd daemon to run the application on the server, as a way to distribute the application - `.jar` archive. For deployment, we have set up a Github Action, the essence of which is to send a new `.jar` archive to the server, and restart the daemon to run a new `.jar`.
+The application is distributed as `no-thanks.jar` and run by a systemd service. The GitHub Actions workflow in `.github/workflows/build-and-deploy.yaml` builds the JAR, transfers it to the server with `rsync`, and restarts the service.
 
-## Prepare system environment
+Replace these placeholders in the commands:
 
-> ℹ️ At this step, we assume that we have a completely clean system environment
+- `<server-ip>`: the server's IP address
+- `<username>`: the dedicated deployment/service user, such as `githubbot`
+- `<groupname>`: that user's group, usually the same as `<username>`
 
-1. Login as root user to the server via ssh: 
-    ```
-    $ ssh root@<ip-address>
-    root@<ip-address>'s password:
-    ```
-2. Install JRE:
-    ```
-    $ sudo apt install default-jre
-    ```
-3. Create directory for the application archives:
-    ```bash
-    mkdir /opt/apps
-    ```
+The Linux user in `deploy/no-thanks.service`, the owner of `/opt/apps`, and the `GITHUBBOT_USER` GitHub secret must refer to the same account. Do not run the application as `root` permanently.
 
-4. Prepare initial application archive and copy to the server via `rsync` from your machine:
-    ```bash
-    $ rsync no-thanks.jar root@193.168.48.222:/opt/apps
-    ```
+## Set up SSH access from your host
 
-5. Prepare systemd daemon config and transfer it via `rsync` from your machine:
-    ```bash
-    $ rsync no-thanks.service root@<ip-address>:/etc/systemd/system/
-    ```
+SSH keys let the server authenticate a private key held by your host instead of requesting the server account's password. Never copy or disclose the private key.
 
-6. Launch `no-thanks` daemon:
-    ```bash
-    sudo systemctl start no-thanks.service
-    ```
+### Windows (PowerShell)
 
-7. Enable daemon autorun after server restart:
-    ```bash
-    sudo systemctl enable no-thanks
-    ```
+Generate a modern Ed25519 key:
 
-## Create a user for deployment control:
+```powershell
+ssh-keygen -t ed25519
+```
 
-1. Log in as root user to the server via ssh:
-    ```
-    $ ssh root@<ip-address>
-    root@<ip-address>'s password:
-    ```
-2. Create user group:
-    ```bash
-    $ sudo groupadd -r <groupname>
-    ```
-3. Create a user:
-    ```bash
-    $ sudo useradd -r -s /bin/false -g <groupname> <username>
-    ```
-4. Make the user the owner of the app archives directory:
-    ```bash
-    $ sudo chown -R <username>:<groupname> /opt/apps
-    ```
-5. Allow user to restart `no-thanks` daemon:
-    ```bash
-    $ echo "<username> ALL=(root) NOPASSWD: /bin/systemctl restart no-thanks" > /etc/sudoers.d/username
-    visudo -c /etc/sudoers.d/githubbot
-    ```
-## Setup user access via ssh keys:
-1. Generate pair on your machine with:
-    ```bash
-    $ ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
-    ssh-keygen -t rsa -b 4096 -C "your_email@github.com"
-    Generating public/private rsa key pair.
-    Enter file in which to save the key (/Users/******/.ssh/id_rsa): <filename>
-    Enter passphrase (empty for no passphrase):
-    Enter same passphrase again:
-    Your identification has been saved in dddd
-    Your public key has been saved in dddd.pub
-    The key fingerprint is:
-    SHA256:xK4KbJpUCFDwVl6zZTZG88vvcJxk2uisdLloL13KAPI githubbot@github.com
-    The key's randomart image is:
-    +---[RSA 4096]----+
-    |oo. . o.O        |
-    |.. o . O +       |
-    |. o . . o .      |
-    |... . .o . .     |
-    | . . o .S o o    |
-    | ..   E..  X..   |
-    | .+   . .+*o*    |
-    |.+ . . .o=+=     |
-    |o   .  .o+= .    |
+Press Enter to accept `C:\Users\<you>\.ssh\id_ed25519`. An empty passphrase allows completely prompt-free login; using a passphrase with `ssh-agent` is safer.
 
-    ```
-2. Copy public key to the server:
-    ```bash
-    rsync <filename>.pub root@<ip-address>:~
-    ```
-3. Set public key as authorized_keys:
-    ```bash
-    $ ssh root@<ip-address>
-    $ mkdir /home/<username>/.ssh
-    $ mv <filename>.pub /home/<username>/.ssh/authorized_keys
-    $ chmod 700 /home/<username>/.ssh && chmod 600 /home/<username>/.ssh/authorized_keys
-    ```
-4. Make the user the owner of `/home/<username>/.ssh/`:
-    ```bash
-    $ chown -R <username>:<username> /home/<username>/.ssh
-    ```
-Now the private key can be used to gain access to the server as a <username> user.
+Display and copy the public key:
 
-## Setup [NGINX](https://www.nginx.com/) proxy and [certbot](https://certbot.eff.org/instructions?ws=nginx&os=ubuntufocal) to enable HTTPS
+```powershell
+Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub
+```
 
-1. Login as root user to the server via ssh: 
-    ```
-    $ ssh root@<ip-address>
-    root@<ip-address>'s password:
-    ```
-2. Install [NGINX](https://www.nginx.com/) proxy server:
-    ```bash
-    $ sudo apt update
-    $ sudo apt install nginx
-    ```
-3. Install certbot
-    ```bash
-    $ sudo apt install snapd
-    $ sudo snap install --classic certbot
-    ```
-4. Get SSL certificates for your domain:
-    ```bash
-    $ sudo ln -s /snap/bin/certbot /usr/bin/certbot
-    $ sudo certbot certonly --nginx
-    ```
-5. Remove default NGINX configuration:
-    ```bash
-    $ rm -rf /etc/nginx/sites-enabled/*
-    $ rm -rf /etc/nginx/sites-available/*
-    ```
-6. Install NGINX configs to server:
-    ```bash
-    # from your machine
-    $ rsync -r ./deploy/nginx/* root@<ip-address>:/etc/nginx/sites-available/
-    ```
-7. Add configs to NGINX configuration:
-    ```bash
-    # on server
-    $ ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
-    $ ln -s /etc/nginx/sites-available/no-thanks.conf /etc/nginx/sites-enabled/no-thanks.conf
-    ```
-8. Generate SSL certificate for default server:
-    ```bash
-    $ openssl req -nodes -new -x509 -subj "/CN=localhost" -keyout /etc/nginx/ssl/default.key -out /etc/nginx/ssl/default.crt
-    ```
-9. Reload NGINX to apply new configuration:
-    ```bash
-    $ nginx -s reload
-    ```
+### Linux or macOS
+
+```bash
+ssh-keygen -t ed25519
+cat ~/.ssh/id_ed25519.pub
+```
+
+### Authorize the host key for root
+
+Log in once using the server password:
+
+```bash
+ssh root@<server-ip>
+```
+
+On the server, add the public key copied above:
+
+```bash
+install -d -m 700 /root/.ssh
+echo 'PASTE_YOUR_PUBLIC_KEY_HERE' >> /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+```
+
+Keep this session open and test `ssh root@<server-ip>` in another terminal before closing it. Run `exit` or press Ctrl+D to return to the host terminal.
+
+## Prepare the server environment
+
+These steps assume a clean Debian/Ubuntu server. Connect as root:
+
+```bash
+ssh root@<server-ip>
+```
+
+Install Java and `rsync`:
+
+```bash
+apt update
+apt install default-jre rsync
+```
+
+Create the deployment group and user before installing or starting the service:
+
+```bash
+groupadd --system <groupname>
+useradd --system --create-home --shell /bin/bash --gid <groupname> <username>
+install -d -o <username> -g <groupname> /opt/apps
+```
+
+`--create-home` and an SSH-capable shell are required because GitHub Actions connects as this account. If the account already exists, do not recreate it.
+
+Set the same account in `deploy/no-thanks.service`:
+
+```ini
+User=<username>
+```
+
+The repository template uses `User=githubbot`. A nonexistent user causes systemd to fail with `status=217/USER`.
+
+## Build the initial JAR
+
+Run this from the repository root on your host.
+
+### Windows (PowerShell)
+
+```powershell
+.\gradlew.bat clean build
+```
+
+### Linux or macOS
+
+```bash
+./gradlew clean build
+```
+
+The Gradle configuration always creates `build/libs/no-thanks.jar`, which is also the path used by GitHub Actions.
+
+## Transfer the initial deployment
+
+The original deployment uses `rsync`. It is available directly on Linux/macOS and through WSL (or another environment where `rsync` is installed) on Windows. Native Windows PowerShell can use `scp` for the one-time setup.
+
+### Windows with WSL (`rsync`)
+
+Run from the repository root, using paths appropriate to that shell:
+
+```bash
+rsync -avz ./build/libs/no-thanks.jar root@<server-ip>:/opt/apps/
+rsync -avz ./deploy/no-thanks.service root@<server-ip>:/etc/systemd/system/
+```
+
+### Windows PowerShell (`scp` alternative)
+
+```powershell
+scp .\build\libs\no-thanks.jar root@<server-ip>:/opt/apps/
+scp .\deploy\no-thanks.service root@<server-ip>:/etc/systemd/system/
+```
+
+### Linux or macOS (`rsync`)
+
+```bash
+rsync -avz ./build/libs/no-thanks.jar root@<server-ip>:/opt/apps/
+rsync -avz ./deploy/no-thanks.service root@<server-ip>:/etc/systemd/system/
+```
+
+On the server, assign ownership, load the unit, start it, and enable startup after reboot:
+
+```bash
+chown -R <username>:<groupname> /opt/apps
+systemctl daemon-reload
+systemctl enable --now no-thanks.service
+systemctl status no-thanks.service
+```
+
+After changing the unit file, always run:
+
+```bash
+systemctl daemon-reload
+systemctl restart no-thanks.service
+```
+
+## Configure the deployment user for GitHub Actions
+
+The workflow connects to the server as `<username>`, writes `/opt/apps/no-thanks.jar` with `rsync`, and restarts the systemd service.
+
+Generate a separate deployment key on a trusted machine. The original RSA form remains valid and is widely compatible:
+
+```bash
+ssh-keygen -t rsa -b 4096 -C "githubbot@github.com" -f githubbot
+```
+
+This creates private key `githubbot` and public key `githubbot.pub`. Do not give the private key to the server.
+
+Copy the public key to the server.
+
+### Windows PowerShell
+
+```powershell
+scp .\githubbot.pub root@<server-ip>:/tmp/githubbot.pub
+```
+
+### Windows with WSL, Linux, or macOS
+
+```bash
+rsync -avz ./githubbot.pub root@<server-ip>:/tmp/githubbot.pub
+```
+
+On the server, authorize it for the deployment user:
+
+```bash
+install -d -m 700 -o <username> -g <groupname> /home/<username>/.ssh
+install -m 600 -o <username> -g <groupname> /tmp/githubbot.pub /home/<username>/.ssh/authorized_keys
+rm /tmp/githubbot.pub
+```
+
+Allow the exact restart command used by `.github/workflows/build-and-deploy.yaml`:
+
+```bash
+echo '<username> ALL=(root) NOPASSWD: /bin/systemctl restart no-thanks' > /etc/sudoers.d/no-thanks-deploy
+chmod 440 /etc/sudoers.d/no-thanks-deploy
+visudo -cf /etc/sudoers.d/no-thanks-deploy
+```
+
+Confirm that `/bin/systemctl` is the correct path with `command -v systemctl`. The sudoers command must match the workflow command exactly.
+
+Test the deployment account:
+
+```bash
+ssh <username>@<server-ip>
+test -w /opt/apps
+sudo -n /bin/systemctl restart no-thanks
+exit
+```
+
+## Configure GitHub Actions secrets
+
+Add these repository secrets under **Settings → Secrets and variables → Actions**:
+
+- `GITHUBBOT_PRIVATE_KEY`: the complete contents of the private `githubbot` key
+- `GITHUBBOT_SSH_HOST`: `<server-ip>` or the server hostname
+- `GITHUBBOT_USER`: `<username>`
+
+The existing workflow runs for pushes to `master`. It can also be started manually with **Run workflow** in the GitHub Actions UI; the workflow file containing `workflow_dispatch` must first exist on the repository's default branch. It performs:
+
+1. A Java 11 Gradle build with `./gradlew build --no-daemon`.
+2. An `rsync` upload of `./build/libs/no-thanks.jar` to `/opt/apps/`.
+3. `sudo systemctl restart no-thanks` over SSH.
+
+Because the workflow uploads as `<username>`, `/opt/apps` must remain writable by that user. The service also runs as that same non-root user.
+
+## Logs and diagnostics
+
+Run these on the server:
+
+```bash
+# Status and recent messages
+systemctl status no-thanks.service
+
+# Complete service log from the current boot, including the Spring banner
+journalctl -u no-thanks.service -b --no-pager
+
+# Follow new messages live; press Ctrl+C to stop
+journalctl -u no-thanks.service -f
+
+# Show the unit systemd actually loaded
+systemctl cat no-thanks.service
+
+# Confirm the process listening on port 8080
+ss -ltnp 'sport = :8080'
+```
+
+Plain `journalctl -u no-thanks.service` includes retained history and starts at the oldest entry, so failed deployments from earlier boots may appear first.
+
+## Set up NGINX and HTTPS
+
+Connect as root and install NGINX and Certbot:
+
+```bash
+apt update
+apt install nginx snapd
+snap install --classic certbot
+ln -s /snap/bin/certbot /usr/bin/certbot
+```
+
+Update the domain in `deploy/nginx/no-thanks.conf`, then transfer the NGINX configuration.
+
+### Windows with WSL, Linux, or macOS (`rsync`)
+
+```bash
+rsync -avz ./deploy/nginx/ root@<server-ip>:/etc/nginx/sites-available/
+```
+
+### Windows PowerShell (`scp` alternative)
+
+```powershell
+scp .\deploy\nginx\default.conf .\deploy\nginx\no-thanks.conf root@<server-ip>:/etc/nginx/sites-available/
+```
+
+On the server, enable the supplied configurations:
+
+```bash
+rm -f /etc/nginx/sites-enabled/default
+ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
+ln -s /etc/nginx/sites-available/no-thanks.conf /etc/nginx/sites-enabled/no-thanks.conf
+mkdir -p /etc/nginx/ssl
+openssl req -nodes -new -x509 -subj '/CN=localhost' -keyout /etc/nginx/ssl/default.key -out /etc/nginx/ssl/default.crt
+nginx -t
+systemctl reload nginx
+```
+
+Request the production certificate after DNS points to the server and the domain in the NGINX config is correct:
+
+```bash
+certbot --nginx
+```
