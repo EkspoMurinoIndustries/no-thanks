@@ -2,6 +2,9 @@
 
 This document describes how to set up a server for the current deployment approach.
 
+For routine health checks, low-memory constraints, and OOM recovery, see
+[`OPERATIONS.md`](OPERATIONS.md).
+
 > **Warning:** This is a deliberately simple deployment and can be improved in the future.
 
 The application is distributed as `no-thanks.jar` and run by a systemd service. The GitHub Actions workflow in `.github/workflows/build-and-deploy.yaml` builds the JAR, transfers it to the server with `rsync`, and restarts the service.
@@ -153,9 +156,87 @@ systemctl daemon-reload
 systemctl restart no-thanks.service
 ```
 
+### Optional small-server memory profile
+
+The default `no-thanks.service` is a general-purpose profile. Do not use its 512
+MiB heap on a host whose total RAM is similarly small. For the current single-core
+server with approximately 371 MiB of usable RAM and 1 GiB of swap, use the
+alternative [`no-thanks-low-memory.service`](no-thanks-low-memory.service).
+
+The alternative uses a 128 MiB heap, Serial GC, a 96 MiB metaspace ceiling, and a
+280 MiB systemd cgroup limit. `MemoryHigh=220M` starts reclaim pressure before the
+hard limit is reached, while its start-rate limit prevents a failing JVM from
+restarting continuously and starving essential operating-system services.
+
+The profile assumes that the host has at least 1 GiB of active swap. Verify that
+first; `swapon --show` must list a swap device or file:
+
+```bash
+swapon --show
+free -h
+```
+
+On this small server, keep swappiness at 20 so the kernel uses that swap before
+physical RAM is exhausted. A value of zero previously allowed a global OOM while
+the entire swap file remained unused:
+
+```bash
+printf 'vm.swappiness=20\n' > /etc/sysctl.d/90-no-thanks-memory.conf
+sysctl -w vm.swappiness=20
+sysctl vm.swappiness
+```
+
+`vm.swappiness` controls when active swap is used; it does not create or enable a
+swap file by itself. See [`OPERATIONS.md`](OPERATIONS.md) for the incident history
+and small-server maintenance policy.
+
+Install the alternative under the canonical unit name expected by the deployment
+workflow and operational commands:
+
+```bash
+scp deploy/no-thanks-low-memory.service root@<server-ip>:/etc/systemd/system/no-thanks.service
+ssh root@<server-ip>
+systemctl daemon-reload
+systemctl enable --now no-thanks.service
+```
+
+Do not install it as a second active `no-thanks-low-memory.service`; two enabled
+units would start two JVMs competing for port 8080 and memory.
+
+After installing or updating it, verify the effective unit, JVM command, memory
+limits, swap policy, and application health:
+
+```bash
+systemctl cat no-thanks.service
+systemctl status no-thanks.service --no-pager
+systemctl show no-thanks.service \
+  -p FragmentPath -p DropInPaths -p MemoryHigh -p MemoryMax -p NRestarts
+sysctl vm.swappiness
+swapon --show
+free -h
+ps -o pid,rss,vsz,%mem,etime,cmd -C java
+curl -I --max-time 10 http://127.0.0.1:8080/
+```
+
+If the server already has `/etc/systemd/system/no-thanks.service.d/memory.conf`,
+keep it until the alternative unit has been copied and verified. It can then be
+removed to avoid maintaining duplicate settings:
+
+```bash
+rm /etc/systemd/system/no-thanks.service.d/memory.conf
+rmdir --ignore-fail-on-non-empty /etc/systemd/system/no-thanks.service.d
+systemctl daemon-reload
+systemctl restart no-thanks.service
+```
+
 ## Configure the deployment user for GitHub Actions
 
-The workflow connects to the server as `<username>`, writes `/opt/apps/no-thanks.jar` with `rsync`, and restarts the systemd service.
+The workflow connects to the server as `<username>`, uploads
+`/opt/apps/no-thanks.jar` and the unit selected by its top-level `SERVICE_PROFILE`
+setting, verifies that the root-installed unit matches that profile byte-for-byte,
+and restarts the systemd service. Unit installation remains a one-time root
+operation: granting the deployment account permission to install arbitrary systemd
+units would allow a compromised deployment key to execute commands as root.
 
 Generate a separate deployment key on a trusted machine. The original RSA form remains valid and is widely compatible:
 
@@ -217,10 +298,89 @@ Add these repository secrets under **Settings → Secrets and variables → Acti
 The existing workflow runs for pushes to `master`. It can also be started manually with **Run workflow** in the GitHub Actions UI; the workflow file containing `workflow_dispatch` must first exist on the repository's default branch. It performs:
 
 1. A Java 11 Gradle build with `./gradlew build --no-daemon`.
-2. An `rsync` upload of `./build/libs/no-thanks.jar` to `/opt/apps/`.
-3. `sudo systemctl restart no-thanks` over SSH.
+2. An upload of `deploy/no-thanks-low-memory.service` to `/opt/apps/`.
+3. A byte-for-byte comparison with `/etc/systemd/system/no-thanks.service`.
+4. An `rsync` upload of `./build/libs/no-thanks.jar` to `/opt/apps/` only when the
+   profiles match.
+5. `sudo -n /bin/systemctl restart no-thanks`.
 
 Because the workflow uploads as `<username>`, `/opt/apps` must remain writable by that user. The service also runs as that same non-root user.
+
+Before the first deployment using this workflow, copy and install the selected
+profile once as root. From the repository root on the host machine:
+
+```bash
+scp deploy/no-thanks-low-memory.service root@<server-ip>:/tmp/no-thanks-low-memory.service
+ssh root@<server-ip>
+```
+
+Then, on the server, install it and remove the now-redundant temporary drop-in:
+
+```bash
+install -o root -g root -m 0644 /tmp/no-thanks-low-memory.service /etc/systemd/system/no-thanks.service
+rm /tmp/no-thanks-low-memory.service
+rm -f /etc/systemd/system/no-thanks.service.d/memory.conf
+rmdir --ignore-fail-on-non-empty /etc/systemd/system/no-thanks.service.d
+systemctl daemon-reload
+systemctl restart no-thanks.service
+```
+
+### Switching service profiles
+
+Activating another profile is intentionally a manual root operation. The workflow
+selects and verifies a profile, but cannot install an arbitrary systemd unit. This
+prevents a compromised deployment key from changing the unit to execute as root.
+
+1. Change the single top-level workflow setting. Use
+   `no-thanks-low-memory.service` for the constrained VPS or `no-thanks.service`
+   for the default profile:
+
+   ```yaml
+   env:
+     SERVICE_PROFILE: no-thanks.service
+   ```
+
+2. From a trusted checkout, copy the same selected file to the server. Replace
+   `<selected-profile>` with the exact filename from `SERVICE_PROFILE`:
+
+   ```bash
+   scp deploy/<selected-profile> root@<server-ip>:/tmp/<selected-profile>
+   ssh root@<server-ip>
+   ```
+
+3. On the server, inspect the change before installing it:
+
+   ```bash
+   diff -u \
+     /etc/systemd/system/no-thanks.service \
+     /tmp/<selected-profile> || true
+   ```
+
+4. Install the selected file under the canonical unit name, validate it, reload
+   systemd, and restart the application:
+
+   ```bash
+   install -o root -g root -m 0644 \
+     /tmp/<selected-profile> \
+     /etc/systemd/system/no-thanks.service
+   systemd-analyze verify /etc/systemd/system/no-thanks.service
+   systemctl daemon-reload
+   systemctl restart no-thanks.service
+   systemctl status no-thanks.service --no-pager
+   curl -I --max-time 10 http://127.0.0.1:8080/
+   rm /tmp/<selected-profile>
+   ```
+
+5. Merge or push the workflow change. Its byte-for-byte comparison will now pass,
+   allowing the JAR deployment and restart to proceed.
+
+The installed path is always `/etc/systemd/system/no-thanks.service`, regardless
+of which source profile is selected. If the profile contents change later, repeat
+the manual installation before deploying that revision.
+
+If a workflow is run before the manual installation, it safely fails before
+uploading the JAR. The selected candidate is left in `/opt/apps/`; inspect it with
+`diff`, install it as root if expected, and rerun the failed workflow.
 
 ## Logs and diagnostics
 
@@ -244,6 +404,47 @@ ss -ltnp 'sport = :8080'
 ```
 
 Plain `journalctl -u no-thanks.service` includes retained history and starts at the oldest entry, so failed deployments from earlier boots may appear first.
+
+### Recover from memory pressure or an OOM restart loop
+
+Typical evidence is `code=killed, signal=KILL` in the service status and `Out of
+memory: Killed process ... (java)` in the kernel journal. Stop the restart loop
+first, then inspect the host while Java is not running:
+
+```bash
+systemctl stop no-thanks.service
+systemctl reset-failed no-thanks.service
+free -h
+swapon --show
+ps -eo pid,user,comm,rss,%mem --sort=-rss | head -20
+journalctl -k -b --no-pager | grep -Ei 'oom|out of memory|killed process|memory cgroup'
+```
+
+If SSH is unresponsive, use the provider console to run the first command. If the
+restart loop resumes during boot, disable the service and reboot:
+
+```bash
+systemctl disable --now no-thanks.service
+reboot
+```
+
+Once the machine is responsive, confirm that the low-memory unit is installed,
+reload it, and start it once:
+
+```bash
+systemctl daemon-reload
+systemctl enable --now no-thanks.service
+sleep 60
+systemctl status no-thanks.service --no-pager
+curl -I --max-time 10 http://127.0.0.1:8080/
+free -h
+```
+
+Do not repeatedly restart a failed service. Read its last messages instead:
+
+```bash
+journalctl -u no-thanks.service -n 100 --no-pager
+```
 
 ## Set up NGINX and HTTPS
 
