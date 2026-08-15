@@ -218,7 +218,7 @@ function renderCards(cards) {
     return groupCards(cards).map(value => {
         let degree = ''
         if (value.length > 1) {
-            degree = `<span class="card-item-degree" style="color: ${getColor(value[1])}">.${value[1]}</span>`
+            degree = `<span class="card-item-degree" style="color: ${getColor(value[1])}">-${value[1]}</span>`
         }
         return `<span class="card-item" style="color: ${getColor(value[0])}">${value[0]}${degree}</span>`
     }).join('')
