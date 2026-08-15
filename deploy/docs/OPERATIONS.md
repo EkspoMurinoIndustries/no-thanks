@@ -1,7 +1,7 @@
 # NoThanks operations runbook
 
-This runbook is for the current small VPS: one CPU, approximately 371 MiB of
-usable RAM, and 1 GiB of swap. It assumes that the repository's optional
+This runbook targets resource-constrained hosts with roughly 512 MiB of RAM and
+at least 1 GiB of swap. It assumes that the repository's optional
 `no-thanks-low-memory.service` has been installed on the server under the canonical
 name `/etc/systemd/system/no-thanks.service`.
 
@@ -47,8 +47,8 @@ still contains `-Xmx128m`, not the old `-Xmx512m` value:
 systemctl cat no-thanks.service
 ```
 
-Start the service once and give the weak CPU approximately one minute to initialize
-Spring Boot:
+Start the service once. On a low-powered CPU, allow approximately one minute for
+Spring Boot to initialize:
 
 ```bash
 systemctl enable --now no-thanks.service
@@ -86,23 +86,20 @@ ps -o pid,rss,vsz,%mem,etime,cmd -C java
 ```
 
 Less than approximately 50 MiB in the `available` column of `free -h` is a warning
-on this host. `free` alone is less useful than `available`, because Linux normally
-uses otherwise-idle RAM for reclaimable filesystem cache.
+on a host of this size. `free` alone is less useful than `available`, because
+Linux normally uses otherwise-idle RAM for reclaimable filesystem cache.
 
 ## Constraints and recommendations
 
-- Keep the existing 1 GiB swap enabled. Confirm it with `swapon --show` after a
+- Keep at least 1 GiB of swap enabled. Confirm it with `swapon --show` after a
   reboot.
-- Keep `vm.swappiness=20` in `/etc/sysctl.d/90-no-thanks-memory.conf`. The August
-  2026 OOM incident occurred with swappiness set to zero: the kernel killed Java
-  at about 171 MiB RSS while the complete 1 GiB swap file was still free. An
-  automatic APT upgrade reached a 191.6 MiB memory peak at the same time. With
-  swappiness 20, Linux moved cold pages to swap and available RAM recovered from
-  about 33 MiB to more than 140 MiB.
+- Set `vm.swappiness=20` in `/etc/sysctl.d/90-no-thanks-memory.conf`. Setting it
+  to zero can cause the kernel to invoke the OOM killer while swap remains unused;
+  a moderate value lets Linux move cold pages to swap when RAM is constrained.
 - Keep the optional low-memory unit's `-Xmx128m` setting. Do not replace it with
-  the default unit on this host. A Java heap limit is not a limit on the complete
-  JVM: metaspace, thread stacks, direct buffers, code cache, and other native
-  allocations need additional RAM.
+  the default unit unless the host has enough memory. A Java heap limit is not a
+  limit on the complete JVM: metaspace, thread stacks, direct buffers, code cache,
+  and other native allocations need additional RAM.
 - Keep `MemoryHigh=220M` and `MemoryMax=280M`. They contain the application before
   it can consume the entire host. Hitting the hard limit may still restart the
   application, but should leave SSH and essential system services responsive.
@@ -112,20 +109,20 @@ uses otherwise-idle RAM for reclaimable filesystem cache.
   public reverse proxy, expose only SSH, HTTP, and HTTPS (normally ports 22, 80,
   and 443); do not expose application port 8080 publicly.
 - Avoid adding memory-heavy services, containers, monitoring stacks, or databases
-  to this VPS without measuring their resident memory.
-- Fix abandoned-lobby retention in the application eventually. It was probably
-  not responsible for the low-traffic OOM incident, but it remains a source of
-  long-term memory growth.
-- A VPS with at least 1 GiB RAM would provide a substantially safer operating
-  margin. Until then, the low-memory systemd profile and periodic checks make the
-  current server more viable.
+  to a constrained host without measuring their resident memory.
+- Fix abandoned-lobby retention in the application eventually; it remains a
+  source of long-term memory growth.
+- A host with at least 1 GiB RAM provides a substantially safer operating margin.
+  On smaller hosts, use the low-memory systemd profile and monitor memory
+  periodically.
 
-## Package updates on the small VPS
+## Package updates on constrained hosts
 
-Automatic APT upgrades are disabled deliberately on this temporary, dedicated
-game server. Their transient memory use can exceed the game JVM's resident memory.
-This trades automatic security patching for predictable resource use, so perform
-the manual procedure below regularly, ideally every week.
+On a constrained, dedicated game server, automatic APT upgrades may use enough
+transient memory to compete with the game JVM. If automatic upgrades are disabled
+to make resource use predictable, perform the manual procedure below regularly,
+ideally every week. This trades automatic security patching for operational
+control.
 
 Disable and verify the automatic timers:
 
@@ -171,12 +168,12 @@ during a controlled maintenance window rather than while the game is running.
 
 ## Deploying the repository unit
 
-The server currently may have a temporary drop-in at
+An existing installation may have a temporary drop-in at
 `/etc/systemd/system/no-thanks.service.d/memory.conf`. A JAR-only deployment does
 not remove it, so the low-memory protection remains active.
 
-When installing the updated repository unit on this VPS, copy the low-memory
-alternative under systemd's canonical service name, then reload systemd:
+When installing the updated repository unit on a constrained host, copy the
+low-memory alternative under systemd's canonical service name, then reload systemd:
 
 ```bash
 scp deploy/no-thanks-low-memory.service root@<server-ip>:/etc/systemd/system/no-thanks.service
