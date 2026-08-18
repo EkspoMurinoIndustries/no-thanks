@@ -1,159 +1,38 @@
-# Application deployment
+# Deployment
 
-This doc contains the instructions how to setup server for the current deploy approach.
+NoThanks is deployed as `no-thanks.jar`, run by systemd, and updated by the
+GitHub Actions workflow in `.github/workflows/build-and-deploy.yaml`.
 
-> :warning: This approach is not perfect and should be significantly improved in the future.
+## Files
 
-We use a simple systemd daemon to run the application on the server, as a way to distribute the application - `.jar` archive. For deployment, we have set up a Github Action, the essence of which is to send a new `.jar` archive to the server, and restart the daemon to run a new `.jar`.
+- [`no-thanks.service`](no-thanks.service) — systemd service unit sized for the
+  game's current observed usage.
+- [`docs/SETUP.md`](docs/SETUP.md) — first-time server and GitHub Actions setup.
+- [`docs/OPERATIONS.md`](docs/OPERATIONS.md) — health checks, updates, and OOM recovery.
+- [`docs/HTTPS.md`](docs/HTTPS.md) — optional NGINX and HTTPS setup.
 
-## Prepare system environment
+## Build
 
-> ℹ️ At this step, we assume that we have a completely clean system environment
+```bash
+./gradlew clean build
+```
 
-1. Login as root user to the server via ssh: 
-    ```
-    $ ssh root@<ip-address>
-    root@<ip-address>'s password:
-    ```
-2. Install JRE:
-    ```
-    $ sudo apt install default-jre
-    ```
-3. Create directory for the application archives:
-    ```bash
-    mkdir /opt/apps
-    ```
+On Windows:
 
-4. Prepare initial application archive and copy to the server via `rsync` from your machine:
-    ```bash
-    $ rsync no-thanks.jar root@193.168.48.222:/opt/apps
-    ```
+```powershell
+.\gradlew.bat clean build
+```
 
-5. Prepare systemd daemon config and transfer it via `rsync` from your machine:
-    ```bash
-    $ rsync no-thanks.service root@<ip-address>:/etc/systemd/system/
-    ```
+The output is `build/libs/no-thanks.jar`.
 
-6. Launch `no-thanks` daemon:
-    ```bash
-    sudo systemctl start no-thanks.service
-    ```
+## Service unit installation
 
-7. Enable daemon autorun after server restart:
-    ```bash
-    sudo systemctl enable no-thanks
-    ```
+The repository's `no-thanks.service` must be installed manually as
+`/etc/systemd/system/no-thanks.service`. The deployment workflow updates only the
+JAR and restarts the service.
 
-## Create a user for deployment control:
+The current JVM and systemd memory limits have proved sufficient for the game's
+present single-lobby load. Increase them in `no-thanks.service` if future usage
+requires more capacity.
 
-1. Log in as root user to the server via ssh:
-    ```
-    $ ssh root@<ip-address>
-    root@<ip-address>'s password:
-    ```
-2. Create user group:
-    ```bash
-    $ sudo groupadd -r <groupname>
-    ```
-3. Create a user:
-    ```bash
-    $ sudo useradd -r -s /bin/false -g <groupname> <username>
-    ```
-4. Make the user the owner of the app archives directory:
-    ```bash
-    $ sudo chown -R <username>:<groupname> /opt/apps
-    ```
-5. Allow user to restart `no-thanks` daemon:
-    ```bash
-    $ echo "<username> ALL=(root) NOPASSWD: /bin/systemctl restart no-thanks" > /etc/sudoers.d/username
-    visudo -c /etc/sudoers.d/githubbot
-    ```
-## Setup user access via ssh keys:
-1. Generate pair on your machine with:
-    ```bash
-    $ ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
-    ssh-keygen -t rsa -b 4096 -C "your_email@github.com"
-    Generating public/private rsa key pair.
-    Enter file in which to save the key (/Users/******/.ssh/id_rsa): <filename>
-    Enter passphrase (empty for no passphrase):
-    Enter same passphrase again:
-    Your identification has been saved in dddd
-    Your public key has been saved in dddd.pub
-    The key fingerprint is:
-    SHA256:xK4KbJpUCFDwVl6zZTZG88vvcJxk2uisdLloL13KAPI githubbot@github.com
-    The key's randomart image is:
-    +---[RSA 4096]----+
-    |oo. . o.O        |
-    |.. o . O +       |
-    |. o . . o .      |
-    |... . .o . .     |
-    | . . o .S o o    |
-    | ..   E..  X..   |
-    | .+   . .+*o*    |
-    |.+ . . .o=+=     |
-    |o   .  .o+= .    |
-
-    ```
-2. Copy public key to the server:
-    ```bash
-    rsync <filename>.pub root@<ip-address>:~
-    ```
-3. Set public key as authorized_keys:
-    ```bash
-    $ ssh root@<ip-address>
-    $ mkdir /home/<username>/.ssh
-    $ mv <filename>.pub /home/<username>/.ssh/authorized_keys
-    $ chmod 700 /home/<username>/.ssh && chmod 600 /home/<username>/.ssh/authorized_keys
-    ```
-4. Make the user the owner of `/home/<username>/.ssh/`:
-    ```bash
-    $ chown -R <username>:<username> /home/<username>/.ssh
-    ```
-Now the private key can be used to gain access to the server as a <username> user.
-
-## Setup [NGINX](https://www.nginx.com/) proxy and [certbot](https://certbot.eff.org/instructions?ws=nginx&os=ubuntufocal) to enable HTTPS
-
-1. Login as root user to the server via ssh: 
-    ```
-    $ ssh root@<ip-address>
-    root@<ip-address>'s password:
-    ```
-2. Install [NGINX](https://www.nginx.com/) proxy server:
-    ```bash
-    $ sudo apt update
-    $ sudo apt install nginx
-    ```
-3. Install certbot
-    ```bash
-    $ sudo apt install snapd
-    $ sudo snap install --classic certbot
-    ```
-4. Get SSL certificates for your domain:
-    ```bash
-    $ sudo ln -s /snap/bin/certbot /usr/bin/certbot
-    $ sudo certbot certonly --nginx
-    ```
-5. Remove default NGINX configuration:
-    ```bash
-    $ rm -rf /etc/nginx/sites-enabled/*
-    $ rm -rf /etc/nginx/sites-available/*
-    ```
-6. Install NGINX configs to server:
-    ```bash
-    # from your machine
-    $ rsync -r ./deploy/nginx/* root@<ip-address>:/etc/nginx/sites-available/
-    ```
-7. Add configs to NGINX configuration:
-    ```bash
-    # on server
-    $ ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
-    $ ln -s /etc/nginx/sites-available/no-thanks.conf /etc/nginx/sites-enabled/no-thanks.conf
-    ```
-8. Generate SSL certificate for default server:
-    ```bash
-    $ openssl req -nodes -new -x509 -subj "/CN=localhost" -keyout /etc/nginx/ssl/default.key -out /etc/nginx/ssl/default.crt
-    ```
-9. Reload NGINX to apply new configuration:
-    ```bash
-    $ nginx -s reload
-    ```
+See [`docs/OPERATIONS.md`](docs/OPERATIONS.md) for maintenance and recovery procedures.

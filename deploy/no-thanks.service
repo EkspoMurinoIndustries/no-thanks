@@ -1,14 +1,19 @@
 [Unit]
 Description=NoThanks game daemon
+StartLimitIntervalSec=300
+StartLimitBurst=3
 
 [Service]
 WorkingDirectory=/opt/apps
-ExecStart=/bin/java -Xms128m -Xmx512m -jar /opt/apps/no-thanks.jar
+ExecStart=/bin/java -Xms32m -Xmx128m -Xss512k -XX:+UseSerialGC -XX:MaxMetaspaceSize=96m -XX:ActiveProcessorCount=1 -XX:+ExitOnOutOfMemoryError -jar /opt/apps/no-thanks.jar
 
 User=githubbot
 Type=simple
 Restart=on-failure
-RestartSec=10
+RestartSec=30
+SuccessExitStatus=143
+MemoryHigh=220M
+MemoryMax=280M
 
 [Install]
 WantedBy=multi-user.target
