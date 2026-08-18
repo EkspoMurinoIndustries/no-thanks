@@ -5,12 +5,9 @@ GitHub Actions workflow in `.github/workflows/build-and-deploy.yaml`.
 
 ## Files
 
-- [`no-thanks.service`](no-thanks.service) — default service profile.
-- [`no-thanks-low-memory.service`](no-thanks-low-memory.service) — constrained
-  profile for low-memory hosts.
+- [`no-thanks.service`](no-thanks.service) — systemd service unit sized for the
+  game's current observed usage.
 - [`docs/SETUP.md`](docs/SETUP.md) — first-time server and GitHub Actions setup.
-- [`docs/SERVICE_PROFILES.md`](docs/SERVICE_PROFILES.md) — selecting, installing, and
-  switching systemd profiles.
 - [`docs/OPERATIONS.md`](docs/OPERATIONS.md) — health checks, updates, and OOM recovery.
 - [`docs/HTTPS.md`](docs/HTTPS.md) — optional NGINX and HTTPS setup.
 
@@ -28,12 +25,14 @@ On Windows:
 
 The output is `build/libs/no-thanks.jar`.
 
-## Selected deployment profile
+## Service unit installation
 
-The workflow currently selects `no-thanks-low-memory.service` through its
-top-level `SERVICE_PROFILE` setting. The selected profile must also be installed
-manually as `/etc/systemd/system/no-thanks.service`; the workflow verifies an
-exact match before uploading a new JAR.
+The repository's `no-thanks.service` must be installed manually as
+`/etc/systemd/system/no-thanks.service`. The deployment workflow updates only the
+JAR and restarts the service.
 
-See [`docs/SERVICE_PROFILES.md`](docs/SERVICE_PROFILES.md) before changing profiles and
-[`docs/OPERATIONS.md`](docs/OPERATIONS.md) for maintenance and recovery procedures.
+The current JVM and systemd memory limits have proved sufficient for the game's
+present single-lobby load. Increase them in `no-thanks.service` if future usage
+requires more capacity.
+
+See [`docs/OPERATIONS.md`](docs/OPERATIONS.md) for maintenance and recovery procedures.

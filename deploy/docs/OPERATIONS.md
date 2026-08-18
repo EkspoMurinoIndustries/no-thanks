@@ -1,9 +1,11 @@
 # NoThanks operations runbook
 
-This runbook targets resource-constrained hosts with roughly 512 MiB of RAM and
-at least 1 GiB of swap. It assumes that the repository's optional
-`no-thanks-low-memory.service` has been installed on the server under the canonical
-name `/etc/systemd/system/no-thanks.service`.
+This runbook describes the current server, which has roughly 512 MiB of RAM and
+at least 1 GiB of swap. It assumes that the repository's `no-thanks.service` has
+been installed as `/etc/systemd/system/no-thanks.service`. Its limits are based
+on observed usage for the game's current single-lobby load, rather than being a
+special configuration for weak hardware. Increase them when higher usage requires
+it and the host has enough capacity.
 
 ## If the application becomes unavailable
 
@@ -96,8 +98,7 @@ Linux normally uses otherwise-idle RAM for reclaimable filesystem cache.
 - Set `vm.swappiness=20` in `/etc/sysctl.d/90-no-thanks-memory.conf`. Setting it
   to zero can cause the kernel to invoke the OOM killer while swap remains unused;
   a moderate value lets Linux move cold pages to swap when RAM is constrained.
-- Keep the optional low-memory unit's `-Xmx128m` setting. Do not replace it with
-  the default unit unless the host has enough memory. A Java heap limit is not a
+- Keep the unit's `-Xmx128m` setting. A Java heap limit is not a
   limit on the complete JVM: metaspace, thread stacks, direct buffers, code cache,
   and other native allocations need additional RAM.
 - Keep `MemoryHigh=220M` and `MemoryMax=280M`. They contain the application before
@@ -113,8 +114,7 @@ Linux normally uses otherwise-idle RAM for reclaimable filesystem cache.
 - Fix abandoned-lobby retention in the application eventually; it remains a
   source of long-term memory growth.
 - A host with at least 1 GiB RAM provides a substantially safer operating margin.
-  On smaller hosts, use the low-memory systemd profile and monitor memory
-  periodically.
+  On smaller hosts, monitor memory periodically.
 
 ## Package updates on constrained hosts
 
@@ -170,19 +170,19 @@ during a controlled maintenance window rather than while the game is running.
 
 An existing installation may have a temporary drop-in at
 `/etc/systemd/system/no-thanks.service.d/memory.conf`. A JAR-only deployment does
-not remove it, so the low-memory protection remains active.
+not remove it, so its memory limits remain active.
 
-When installing the updated repository unit on a constrained host, copy the
-low-memory alternative under systemd's canonical service name, then reload systemd:
+When installing the updated repository unit, copy it under systemd's canonical
+service path, then reload systemd:
 
 ```bash
-scp deploy/no-thanks-low-memory.service root@<server-ip>:/etc/systemd/system/no-thanks.service
+scp deploy/no-thanks.service root@<server-ip>:/etc/systemd/system/no-thanks.service
 ssh root@<server-ip>
 systemctl daemon-reload
 systemctl cat no-thanks.service
 ```
 
-Only after confirming that the main unit contains the low-memory settings may the
+Only after confirming that the main unit contains the memory settings may the
 duplicate drop-in be removed:
 
 ```bash

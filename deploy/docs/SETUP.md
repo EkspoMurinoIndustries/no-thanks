@@ -23,12 +23,11 @@ because GitHub Actions connects as the service account.
 
 ## Install the application initially
 
-Build locally, then copy the JAR and the chosen service profile. The current small
-VPS uses the low-memory profile:
+Build locally, then copy the JAR and service unit:
 
 ```bash
 scp build/libs/no-thanks.jar root@<server-ip>:/opt/apps/
-scp deploy/no-thanks-low-memory.service root@<server-ip>:/etc/systemd/system/no-thanks.service
+scp deploy/no-thanks.service root@<server-ip>:/etc/systemd/system/no-thanks.service
 ```
 
 On the server:
@@ -40,9 +39,6 @@ systemctl enable --now no-thanks.service
 systemctl status no-thanks.service --no-pager
 curl -I --max-time 10 http://127.0.0.1:8080/
 ```
-
-See [`SERVICE_PROFILES.md`](SERVICE_PROFILES.md) for the low-memory host settings
-and profile-switching procedure.
 
 ## Configure the deployment key
 
@@ -86,12 +82,11 @@ Add these repository secrets:
 - `GITHUBBOT_SSH_HOST` — server IP or hostname.
 - `GITHUBBOT_USER` — deployment/service username.
 
-The workflow runs on pushes to `master` and through `workflow_dispatch`. It:
+The workflow runs on pushes to `master` and can be started manually through
+`workflow_dispatch`. It:
 
 1. Builds the JAR.
-2. Uploads the selected service profile and verifies it against the root-installed
-   unit.
-3. Uploads the JAR only when profiles match.
-4. Restarts `no-thanks.service`.
+2. Uploads the JAR.
+3. Restarts `no-thanks.service`.
 
 The workflow deliberately cannot install arbitrary systemd units as root.
