@@ -37,13 +37,44 @@
 
 .own-player-card {
     max-width: 350px;
-    height: 60px;
+    min-height: 88px;
     background:
             linear-gradient(to right, #8f9af5, #8f9af5) padding-box,
             linear-gradient(to bottom, #c5c3f9, #ac9efa) border-box;
     border: 2px solid transparent;
     border-radius: 10px;
     margin: auto;
+}
+
+.own-player-name-block {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 27px;
+    padding: 0 12px;
+    border-bottom: 1px solid rgba(197, 195, 249, 0.65);
+    box-sizing: border-box;
+}
+
+.own-player-label {
+    color: #50449c;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+#current-player-name {
+    overflow: hidden;
+    padding: 0;
+    background: transparent;
+    font-size: 18px;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.own-player-status-block {
+    min-height: 60px;
 }
 
 .coins-card-block {

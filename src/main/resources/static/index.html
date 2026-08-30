@@ -27,7 +27,7 @@
                 <div class="form-block your-name">
                     <form>
                         <label class="label" for="regName">Hi, print your name</label>
-                        <input class="input" type="text" id="regName" name="regName" autofocus>
+                        <input class="input" type="text" id="regName" name="regName" maxlength="12" autofocus>
                         <button class="button ok-button" type="submit" onclick="auth(); return false;">OK</button>
                     </form>
                 </div>
@@ -42,6 +42,7 @@
                     <p>NO THANKS!</p>
                 </div>
                 <div class="form-block create-game">
+                    <p class="player-greeting">Hello, <span id="player-name"></span>.</p>
                     <form>
                         <button class="button create-game-button" type="button" onclick="createGame(); return false;">Create Game</button>
                     </form>
@@ -94,8 +95,15 @@
             </div>
             <div class="player-status-block">
                 <div class="own-player-card">
-                    <div class="coins-card-block"><span id="coins-count">0</span></div>
-                    <div class="cards-card-block" id="player-cards"></div>
+                    <div class="own-player-name-block">
+                        <span class="own-player-label">You</span>
+                        <button class="editable-player-name" id="current-player-name" type="button"
+                                onclick="renderChangeNameBlock(); return false;" title="Change name"></button>
+                    </div>
+                    <div class="own-player-status-block">
+                        <div class="coins-card-block"><span id="coins-count">0</span></div>
+                        <div class="cards-card-block" id="player-cards"></div>
+                    </div>
                 </div>
             </div>
             <div class="game-players-block form-block" id="game-players-block">

@@ -35,3 +35,9 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Playwright ###
+node_modules/
+playwright-report/
+test-results/
+blob-report/

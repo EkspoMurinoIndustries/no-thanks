@@ -8,6 +8,7 @@ let startGameButton = $('#start-game-button')
 
 let gameScreen = $('#game-screen')
 let gamePlayersList = $('#game-players-block')
+let currentPlayerName = $('#current-player-name')
 let currentPlayerCoins = $('#coins-count')
 let currentPlayerCards = $('#player-cards')
 let currentCardBlock = $('#current-card')
@@ -53,13 +54,19 @@ let changeNameBlock =
     $('<div class="error-message" id="new-name-block">\n' +
         '    <div class="error-message--appeared">\n' +
         '        <div class="changename-message-box">\n' +
-        '            <div class="error-message-text"><br><span id="error-message-text">New name</span></div>\n' +
-        '            <input class="input" type="text" id="newName" name="newName" autofocus>' +
-        '            <button class="button error-message-button" onclick="changeName(this); return false;">OK</button>\n' +
+        '            <form onsubmit="changeName(); return false;">\n' +
+        '                <div class="error-message-text"><br><span>New name</span></div>\n' +
+        '                <input class="input" type="text" id="newName" name="newName" maxlength="12" autofocus>' +
+        '                <button class="button error-message-button" type="submit">OK</button>\n' +
+        '            </form>\n' +
         '        </div>\n' +
         '    </div>\n' +
         '</div>')
 let gameButtons = $('#game-buttons-block')
+
+function isBlank(value) {
+    return typeof value !== 'string' || value.trim() === ''
+}
 
 function renderAuthAndCreateConnectScreen() {
     let cookies = parseCookie()
@@ -68,7 +75,7 @@ function renderAuthAndCreateConnectScreen() {
         return URLInviteCode.length === 5
     }
 
-    if (cookies['no-thanks-name'] === undefined || cookies['no-thanks-token'] === undefined) {
+    if (isBlank(cookies['no-thanks-name']) || cookies['no-thanks-token'] === undefined) {
         renderAuthScreen()
     } else {
         let URLInviteCode = location.pathname.substring(1);
@@ -100,14 +107,16 @@ function renderLobbyScreen(isCreator, players, lobbyInviteCode, params) {
 function addPlayerToLobbyList(player) {
     let playerClass = player.number === myNumber ? "players-li current-player" : "players-li"
     let clickable = player.number === myNumber ? "onclick=\"renderChangeNameBlock(); return false;\"" : ""
+    let playerNameClass = player.number === myNumber ? "nickname editable-player-name" : "nickname"
     lobbyPlayersList.append($(
         `<li class="${playerClass}" id="lobby-player-li-${player.number}">
             <div class="player-ava-block"></div>
-            <span id="lobby-player-li-span-${player.number}" ${clickable} class="nickname\">${player.name}</span>
+            <span id="lobby-player-li-span-${player.number}" ${clickable} class="${playerNameClass}">${player.name}</span>
         </li>`))
 }
 function renderChangeNameBlock() {
     $('body').append(changeNameBlock);
+    $('#newName').val(Cookies.get('no-thanks-name') || '').trigger('focus').select()
 }
 
 function renderRulesBlock() {
@@ -146,7 +155,7 @@ function renderCreateAndConnectScreen(name) {
     authScreen.hide()
     lobbyScreen.hide()
     gameScreen.hide()
-    $('#player-name').html(name)
+    $('#player-name').text(name)
 }
 
 function renderGameScreen(playersList, currentCard, activePlayerNumber, remainingNumberCard, currentCardCoin = 0) {
@@ -179,6 +188,7 @@ function renderPlayButtons(isCurrent, enoughCoins) {
 
 function renderSingleGamePlayer(player, activePlayerNumber) {
     if (player.number === myNumber) {
+        currentPlayerName.text(player.name)
         updatePersonalInfo(player.coins, player.cards, activePlayerNumber === myNumber)
     } else {
         let otherPlayerClass = activePlayerNumber === player.number ? "player-card turn" : "player-card"
@@ -188,7 +198,7 @@ function renderSingleGamePlayer(player, activePlayerNumber) {
             `<div class="${otherPlayerClass}" id="${otherPlayerBlockId}">
                 <div class="nickname-player-card-block">
                     <div class="player-ava-block"></div>
-                    <span class="nickname">${player.name}</span>
+                    <span class="nickname" id="game-player-name-${player.number}">${player.name}</span>
                 </div>
                 <div class="status-player-card-block">
                     <div class="cards-card-block" id="${otherPlayerCardsBlockId}">
@@ -314,4 +324,9 @@ function setCurrentTurnPlayer(newCurrentPlayerNumber) {
 
 function renderNewName(message) {
     $(`#lobby-player-li-span-${message['playerNumber']}`).text(message['newName'])
+    if (message['playerNumber'] === myNumber) {
+        currentPlayerName.text(message['newName'])
+    } else {
+        $(`#game-player-name-${message['playerNumber']}`).text(message['newName'])
+    }
 }

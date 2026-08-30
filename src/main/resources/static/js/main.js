@@ -9,8 +9,8 @@ renderAuthAndCreateConnectScreen()
 
 function auth() {
     let playerName = $('#regName')[0].value
-    if (playerName === undefined || playerName === '') {
-        console.log("Empty name")
+    if (isBlank(playerName)) {
+        showErrorMessage("Name cannot be blank")
         return
     }
     $.post({
@@ -30,8 +30,8 @@ function auth() {
 function connectAndSend(message) {
     let cookies = parseCookie()
     let name = cookies['no-thanks-name']
-    if (name === undefined) {
-        showErrorMessage("Name is undefined")
+    if (isBlank(name)) {
+        showErrorMessage("Name cannot be blank")
         return
     }
     message.name = name
@@ -178,6 +178,11 @@ function returnToLobby() {
 }
 
 function changeName() {
-    stompClient.send('/app/lobby/input/name', {}, JSON.stringify({newName: $('#newName')[0].value}))
+    let newName = $('#newName')[0].value
+    if (isBlank(newName)) {
+        showErrorMessage("Name cannot be blank")
+        return
+    }
+    stompClient.send('/app/lobby/input/name', {}, JSON.stringify({newName: newName}))
     $('#new-name-block').remove()
 }
