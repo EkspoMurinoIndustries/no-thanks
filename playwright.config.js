@@ -1,9 +1,11 @@
 const { defineConfig, devices } = require('@playwright/test')
 
-const applicationUrl = 'http://127.0.0.1:8080'
+const applicationUrl = process.env.E2E_BASE_URL || 'http://127.0.0.1:8080'
+const applicationPort = new URL(applicationUrl).port || '80'
+const serverArgs = applicationPort === '8080' ? '' : ` --args=--server.port=${applicationPort}`
 const startApplication = process.platform === 'win32'
-    ? '.\\gradlew.bat bootRun'
-    : './gradlew bootRun'
+    ? `.\\gradlew.bat bootRun${serverArgs}`
+    : `./gradlew bootRun${serverArgs}`
 
 module.exports = defineConfig({
     testDir: './e2e',

@@ -1,10 +1,11 @@
 const { test, expect } = require('@playwright/test')
 
-const applicationUrl = 'http://127.0.0.1:8080'
+const applicationUrl = process.env.E2E_BASE_URL || 'http://127.0.0.1:8080'
 
 async function register(page, name) {
     await page.goto(applicationUrl)
     await expect(page.locator('#auth-screen')).toBeVisible()
+    await expect(page.locator('#regName')).toHaveAttribute('maxlength', '15')
     await page.locator('#regName').fill(name)
     await page.getByRole('button', { name: 'OK' }).click()
     await expect(page.getByRole('button', { name: 'Create Game' })).toBeVisible()
@@ -42,6 +43,7 @@ test('two players keep and edit their names in the lobby and game', async ({ bro
 
         const creatorNameDialog = creator.locator('#new-name-block')
         const creatorNameInput = creatorNameDialog.locator('#newName')
+        await expect(creatorNameInput).toHaveAttribute('maxlength', '15')
         await expect(creatorNameInput).toHaveValue('CreatorCase')
         await creatorNameInput.fill('   ')
         await creatorNameInput.press('Enter')
@@ -51,16 +53,16 @@ test('two players keep and edit their names in the lobby and game', async ({ bro
         await expect(creatorLobbyName).toHaveText('CreatorCase')
 
         await creator.locator('#error-message').getByRole('button', { name: 'OK' }).click()
-        await creatorNameInput.fill('CreatorLobby')
+        await creatorNameInput.fill('FifteenCharName')
         await creatorNameInput.press('Enter')
 
-        await expect(creatorLobbyName).toHaveText('CreatorLobby')
-        await expect(guest.locator('#players-list .nickname').filter({ hasText: 'CreatorLobby' })).toBeVisible()
+        await expect(creatorLobbyName).toHaveText('FifteenCharName')
+        await expect(guest.locator('#players-list .nickname').filter({ hasText: 'FifteenCharName' })).toBeVisible()
 
         await creator.getByRole('button', { name: 'Start Game' }).click()
         await expect(creator.locator('#game-screen')).toBeVisible()
         await expect(guest.locator('#game-screen')).toBeVisible()
-        await expect(creator.locator('#current-player-name')).toHaveText('CreatorLobby')
+        await expect(creator.locator('#current-player-name')).toHaveText('FifteenCharName')
         await expect(guest.locator('#current-player-name')).toHaveText('GuestCase')
 
         await guest.locator('#current-player-name').click()

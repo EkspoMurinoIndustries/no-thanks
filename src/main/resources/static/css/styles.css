@@ -192,10 +192,30 @@ textarea:focus, input:focus {
     gap: 10px;
 }
 
+.round-label {
+    font-family: 'Fredoka One', sans-serif;
+    font-size: 24px;
+    text-align: center;
+}
+
+.lobby-action-buttons,
+.result-action-buttons,
+.game-meta-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.lobby-action-buttons .button,
+.result-action-buttons .button,
+.game-meta-controls .button {
+    margin: 0;
+}
 
 .invite-code-block {
     font-size: 25px;
-    flex-grow: 1;
+    text-align: center;
 }
 
 .result-block-header {
@@ -203,26 +223,61 @@ textarea:focus, input:focus {
 }
 
 
-.result-block-header span {
+.results-title,
+.results-title span {
     font-family: 'Fredoka One', sans-serif;
     font-size: 40px;
+    line-height: 1.15;
 }
 
 .scroll-wrapper {
-    overflow: scroll;
+    max-width: 100%;
+    overflow: auto;
 }
 
 .result-table {
     font-size: 20px;
+    line-height: 1.15;
     border: none;
     border-collapse: collapse;
     margin: 10px auto auto;
+}
+
+.lobby-results-block {
+    min-width: 0;
+}
+
+.lobby-results-header {
+    font-family: 'Fredoka One', sans-serif;
+    font-size: 24px;
+    text-align: center;
+}
+
+.lobby-results-block .result-table {
+    width: 100%;
+    font-size: 16px;
+}
+
+.lobby-results-block .result-table td,
+.lobby-results-block .result-table th {
+    width: auto;
+    min-width: 34px;
 }
 
 .result-table td {
     width: 50px;
     min-width: 50px;
     text-align: center;
+}
+
+.result-table th {
+    min-width: 50px;
+    padding: 0 4px 6px;
+    text-align: center;
+}
+
+.result-table th:first-child {
+    padding-right: 10px;
 }
 
 .result-table tr td:first-child {
@@ -234,6 +289,48 @@ textarea:focus, input:focus {
     border-left: 1px solid white;
     font-weight: bold;
     padding-left: 4px;
+}
+
+.result-table .empty-results-row td {
+    width: auto;
+    border: none;
+    padding: 12px;
+}
+
+.result-action-buttons {
+    margin-bottom: 30px;
+}
+
+.removed-cards-block {
+    margin-top: 16px;
+    font-size: 18px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.removed-cards-label {
+    font-family: 'Fredoka One', sans-serif;
+}
+
+.removed-card {
+    font-weight: bold;
+}
+
+.results-message-box {
+    box-sizing: border-box;
+    width: min(92vw, 700px);
+    max-height: 90vh;
+    overflow: auto;
+    padding: 20px;
+    background: linear-gradient(155deg, #765ddd, #5790fb) padding-box,
+                linear-gradient(to bottom right, #a995ff, #607af5) border-box;
+    border: 4px solid transparent;
+    border-radius: 26px;
+}
+
+.completed-rounds-label {
+    margin-top: 6px;
+    text-align: center;
 }
 
 .error-message {

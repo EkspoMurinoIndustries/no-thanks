@@ -14,7 +14,7 @@ internal class PlayerNameUtilsTest {
 
     @Test
     fun `limits name length`() {
-        assertEquals("123456789012", "1234567890123".validatedPlayerName())
+        assertEquals("123456789012345", "1234567890123456".validatedPlayerName())
     }
 
     @Test

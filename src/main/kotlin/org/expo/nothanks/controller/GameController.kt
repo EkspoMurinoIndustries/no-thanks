@@ -51,7 +51,9 @@ class GameController(
                 playerNumber = lobby.players[token]!!.number,
                 gameStatus = lobby.gameStatusOrNull(token),
                 params = lobby.params,
-                inviteCode = lobby.inviteCode
+                inviteCode = lobby.inviteCode,
+                round = lobby.round,
+                result = lobby.getResult()
             )
         }
         return response
@@ -68,6 +70,11 @@ class GameController(
             if (message.scoreReset) {
                 gamesService.resetHistory(gameId, principal.getPlayerId()) {
                     notificationService.scoreReset(it)
+                }
+            }
+            if (message.wantToAbort) {
+                gamesService.abortRound(gameId, principal.getPlayerId()) {
+                    notificationService.roundAborted(it)
                 }
             }
             if (message.wantToStart) {
@@ -96,12 +103,13 @@ class GameController(
                     notificationService.updateInfo(it)
                 }
             } else {
-                gamesService.takeCard(gameId, playerId) {
-                    if (it.isGameStarted()) {
-                        notificationService.takeCard(it)
-                        notificationService.updateInfo(it)
+                gamesService.takeCard(gameId, playerId) { lobby, removedCards ->
+                    // Removed cards are revealed only when this take ends the round; null means play continues.
+                    if (removedCards == null) {
+                        notificationService.takeCard(lobby)
+                        notificationService.updateInfo(lobby)
                     } else {
-                        notificationService.endRound(it)
+                        notificationService.endRound(lobby, removedCards)
                     }
                 }
             }

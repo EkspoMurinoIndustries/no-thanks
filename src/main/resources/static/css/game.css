@@ -1,3 +1,13 @@
+.game-meta-controls {
+    align-items: center;
+    margin: 15px auto 0;
+}
+
+.compact-button {
+    height: 42px;
+    font-size: 20px;
+}
+
 .current-card-block {
     text-align: center;
     display: grid;

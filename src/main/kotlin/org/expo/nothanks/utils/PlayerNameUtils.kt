@@ -2,7 +2,7 @@ package org.expo.nothanks.utils
 
 import org.expo.nothanks.exception.SomethingWentWrong
 
-const val MAX_PLAYER_NAME_LENGTH = 12
+const val MAX_PLAYER_NAME_LENGTH = 15
 
 fun String.validatedPlayerName(): String {
     if (isBlank()) {
