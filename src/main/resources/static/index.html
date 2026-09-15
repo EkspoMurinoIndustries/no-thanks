@@ -27,7 +27,7 @@
                 <div class="form-block your-name">
                     <form>
                         <label class="label" for="regName">Hi, print your name</label>
-                        <input class="input" type="text" id="regName" name="regName" autofocus>
+                        <input class="input" type="text" id="regName" name="regName" maxlength="15" autofocus>
                         <button class="button ok-button" type="submit" onclick="auth(); return false;">OK</button>
                     </form>
                 </div>
@@ -42,6 +42,7 @@
                     <p>NO THANKS!</p>
                 </div>
                 <div class="form-block create-game">
+                    <p class="player-greeting">Hello, <span id="player-name"></span>.</p>
                     <form>
                         <button class="button create-game-button" type="button" onclick="createGame(); return false;">Create Game</button>
                     </form>
@@ -72,13 +73,28 @@
                         <div class="invite-code-block">
                             <span>Invite code: <span id="invite-code"></span></span>
                         </div>
-                        <button class="button" id="start-game-button" type="button" onclick="startGame(); return false;">Start Game</button>
+                        <div class="lobby-results-block">
+                            <div class="lobby-results-header">Current Results</div>
+                            <div class="scroll-wrapper">
+                                <table class="result-table" id="lobby-results-table"></table>
+                            </div>
+                        </div>
+                        <div class="round-label">Next round: <span id="lobby-round-number">1</span></div>
+                        <div class="lobby-action-buttons">
+                            <button class="button" id="start-game-button" type="button" onclick="startGame(); return false;">Start Game</button>
+                            <button class="button secondary-button" id="reset-score-button" type="button" onclick="resetScore(); return false;">Reset Score</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <div id="game-screen">
+            <div class="game-meta-controls">
+                <div class="round-label">Round <span id="game-round-number">1</span></div>
+                <button class="button compact-button" id="show-results-button" type="button" onclick="renderGameResultsBlock(); return false;">Scores</button>
+                <button class="button compact-button" id="abort-round-button" type="button" onclick="abortRound(); return false;">End Round</button>
+            </div>
             <div class="current-card-block">
                 <div class="current-card-number-block">
                     <span id="current-card">35</span>
@@ -94,8 +110,15 @@
             </div>
             <div class="player-status-block">
                 <div class="own-player-card">
-                    <div class="coins-card-block"><span id="coins-count">0</span></div>
-                    <div class="cards-card-block" id="player-cards"></div>
+                    <div class="own-player-name-block">
+                        <span class="own-player-label"></span>
+                        <button class="editable-player-name" id="current-player-name" type="button"
+                                onclick="renderChangeNameBlock(); return false;" title="Change name"></button>
+                    </div>
+                    <div class="own-player-status-block">
+                        <div class="coins-card-block"><span id="coins-count">0</span></div>
+                        <div class="cards-card-block" id="player-cards"></div>
+                    </div>
                 </div>
             </div>
             <div class="game-players-block form-block" id="game-players-block">
@@ -111,13 +134,20 @@
             <p>NO THANKS!</p>
         </div>
         <div class="result-block form-block">
-            <div class="result-block-header"><span>Result:</span></div>
+            <div class="result-block-header"><span class="results-title">Round <span id="result-round-number">1</span> Results</span></div>
             <div class="scroll-wrapper">
             <table class="result-table" id="result-table">
             </table>
             </div>
+            <div class="removed-cards-block" id="removed-cards-block">
+                <span class="removed-cards-label">Removed cards:</span>
+                <span id="removed-cards-list"></span>
+            </div>
         </div>
-        <button class="button" type="button" onclick="returnToLobby(); return false;">Return To Lobby</button>
+        <div class="result-action-buttons">
+            <button class="button" id="start-next-round-button" type="button" onclick="startGame(); return false;">Start Next Round</button>
+            <button class="button secondary-button" type="button" onclick="returnToLobby(); return false;">Return To Lobby</button>
+        </div>
     </div>
 </div>
 </body>

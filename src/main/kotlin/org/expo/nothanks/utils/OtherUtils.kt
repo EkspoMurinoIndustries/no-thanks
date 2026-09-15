@@ -9,11 +9,11 @@ private val charPool = ('A'..'Z')
 
 fun createDeck(params: GameParams): Deck {
     val cardCount = params.maxCard - params.minCard + 1
+    val shuffledCards = (params.minCard..params.maxCard).shuffled()
+    val playableCardCount = cardCount - params.extraCards
     return Deck(
-        cards = (params.minCard..params.maxCard)
-            .toMutableList()
-            .shuffled()
-            .subList(0, cardCount - params.extraCards)
+        cards = shuffledCards.take(playableCardCount),
+        removedCards = shuffledCards.drop(playableCardCount).sorted()
     )
 }
 

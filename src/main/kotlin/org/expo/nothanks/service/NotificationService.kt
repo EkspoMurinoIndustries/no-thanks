@@ -14,7 +14,10 @@ class NotificationService(
 ) {
 
     fun scoreReset(lobby: Lobby) {
-        messageToTopic(lobby, ScoreResetMessage())
+        messageToTopic(lobby, ScoreResetMessage(
+            round = lobby.round,
+            result = lobby.getResult()
+        ))
     }
 
     fun paramsChanged(lobby: Lobby) {
@@ -64,7 +67,9 @@ class NotificationService(
             currentPlayerNumber = lobby.getGame().currentPlayerNumber(),
             players = lobby.getPlayersInGame(),
             currentCard = lobby.getGame().currentCard(),
-            remainingNumberCards = lobby.getGame().remainingNumberCards()
+            remainingNumberCards = lobby.getGame().remainingNumberCards(),
+            round = lobby.round,
+            result = lobby.getResult()
         ))
     }
 
@@ -86,8 +91,17 @@ class NotificationService(
         ))
     }
 
-    fun endRound(lobby: Lobby) {
+    fun endRound(lobby: Lobby, removedCards: List<Int>) {
         messageToTopic(lobby, EndRoundMessage(
+            result = lobby.getResult(),
+            round = lobby.round,
+            removedCards = removedCards
+        ))
+    }
+
+    fun roundAborted(lobby: Lobby) {
+        messageToTopic(lobby, RoundAbortedMessage(
+            round = lobby.round,
             result = lobby.getResult()
         ))
     }

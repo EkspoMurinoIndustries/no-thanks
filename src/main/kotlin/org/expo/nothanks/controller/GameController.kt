@@ -30,13 +30,14 @@ class GameController(
     @SendToUser("/lobby/info")
     fun gameManager(@Payload message: ConnectToGameMessage, principal: Principal): Any {
         val token = principal.getPlayerId()
+        val playerName = message.name.validatedPlayerName()
         val gameId = if (message.createGame) {
             gamesService.createLobby(token).gameId
         } else {
             gamesService.gameIdByInviteCode(message.inviteCode ?: throw NoThanksException("Empty invite code"))
         }
         lateinit var response: UserConnectedMessage
-        gamesService.addPlayerToLobby(gameId, token, message.name) { lobby, newPlayer ->
+        gamesService.addPlayerToLobby(gameId, token, playerName) { lobby, newPlayer ->
             if (newPlayer) {
                 notificationService.lobbyConnection(lobby, token)
             } else {
@@ -50,7 +51,9 @@ class GameController(
                 playerNumber = lobby.players[token]!!.number,
                 gameStatus = lobby.gameStatusOrNull(token),
                 params = lobby.params,
-                inviteCode = lobby.inviteCode
+                inviteCode = lobby.inviteCode,
+                round = lobby.round,
+                result = lobby.getResult()
             )
         }
         return response
@@ -67,6 +70,11 @@ class GameController(
             if (message.scoreReset) {
                 gamesService.resetHistory(gameId, principal.getPlayerId()) {
                     notificationService.scoreReset(it)
+                }
+            }
+            if (message.wantToAbort) {
+                gamesService.abortRound(gameId, principal.getPlayerId()) {
+                    notificationService.roundAborted(it)
                 }
             }
             if (message.wantToStart) {
@@ -95,12 +103,13 @@ class GameController(
                     notificationService.updateInfo(it)
                 }
             } else {
-                gamesService.takeCard(gameId, playerId) {
-                    if (it.isGameStarted()) {
-                        notificationService.takeCard(it)
-                        notificationService.updateInfo(it)
+                gamesService.takeCard(gameId, playerId) { lobby, removedCards ->
+                    // Removed cards are revealed only when this take ends the round; null means play continues.
+                    if (removedCards == null) {
+                        notificationService.takeCard(lobby)
+                        notificationService.updateInfo(lobby)
                     } else {
-                        notificationService.endRound(it)
+                        notificationService.endRound(lobby, removedCards)
                     }
                 }
             }
@@ -114,14 +123,16 @@ class GameController(
     fun name(@Payload message: ChangeNameMessage, principal: Principal) {
         val playerId = principal.getPlayerId()
         val gameId = gamesService.gameIdByPlayerId(playerId)
-        gamesService.changeGameWithLock(gameId) { lobby ->
-            var newPlayerName = message.newName
-            if (newPlayerName.length > 12) {
-                newPlayerName = newPlayerName.substring(0, 12)
+        try {
+            val newPlayerName = message.newName.validatedPlayerName()
+            gamesService.changeGameWithLock(gameId) { lobby ->
+                lobby.changePlayerName(playerId, newPlayerName)
+                notificationService.updatePlayerName(lobby, playerId, newPlayerName)
+                notificationService.updatePersonalPlayerName(lobby, playerId, newPlayerName)
             }
-            lobby.changePlayerName(playerId, newPlayerName)
-            notificationService.updatePlayerName(lobby, playerId, newPlayerName)
-            notificationService.updatePersonalPlayerName(lobby, playerId, newPlayerName)
+        } catch (e: NoThanksException) {
+            logger.error("changeName error", e)
+            notificationService.sendErrorToUser(gameId, playerId, e.publicMessage)
         }
     }
 

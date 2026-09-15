@@ -4,13 +4,16 @@ let sock
 let stompClient
 let activeGameId
 let myNumber
+let amCreator = false
+let currentRound = 0
+let currentResults = {}
 
 renderAuthAndCreateConnectScreen()
 
 function auth() {
     let playerName = $('#regName')[0].value
-    if (playerName === undefined || playerName === '') {
-        console.log("Empty name")
+    if (isBlank(playerName)) {
+        showErrorMessage("Name cannot be blank")
         return
     }
     $.post({
@@ -30,8 +33,8 @@ function auth() {
 function connectAndSend(message) {
     let cookies = parseCookie()
     let name = cookies['no-thanks-name']
-    if (name === undefined) {
-        showErrorMessage("Name is undefined")
+    if (isBlank(name)) {
+        showErrorMessage("Name cannot be blank")
         return
     }
     message.name = name
@@ -77,9 +80,11 @@ function processTopicMessage(message) {
     if (message['type'] === "LobbyConnectedMessage") {
         addPlayerToLobbyList(message['newPlayer'])
         updatePlayerCountInLobby(message['allPlayers'].length)
+        updateResultsFromPlayers(message['allPlayers'])
     }
     if (message['type'] === "PlayerLeftMessage") {
         deletePlayerFromLobby(message['player'], message['remainingPlayersNumber'])
+        removePlayerFromResults(message['player']['number'])
     }
     if (message['type'] === "PlayerDisconnectedMessage") {
         playerDisconnected(message['player'])
@@ -88,6 +93,7 @@ function processTopicMessage(message) {
         playerReconnected(message['player'])
     }
     if (message['type'] === "RoundStartedMessage") {
+        updateRoundAndResults(message['round'], message['result'])
         renderGameScreen(message.players, message['currentCard'], message['currentPlayerNumber'], message['remainingNumberCards'])
     }
     if (message['type'] === "TakeCardMessage") {
@@ -103,7 +109,15 @@ function processTopicMessage(message) {
         setCurrentTurnPlayer(message['newCurrentPlayerNumber'])
     }
     if (message['type'] === "EndRoundMessage") {
-        renderEndRoundScreen(message.result)
+        updateRoundAndResults(message['round'], message['result'])
+        renderEndRoundScreen(message.result, message['removedCards'])
+    }
+    if (message['type'] === "RoundAbortedMessage") {
+        updateRoundAndResults(message['round'], message['result'])
+        returnToLobby()
+    }
+    if (message['type'] === "ScoreResetMessage") {
+        updateRoundAndResults(message['round'], message['result'])
     }
     if (message['type'] === "PlayerNameChangedMessage") {
         console.log(message)
@@ -130,6 +144,8 @@ function processDirectInfoMessage(message) {
         window.history.pushState({},"", message['inviteCode']);
         myNumber = message['playerNumber']
         activeGameId = message['gameId']
+        amCreator = message['isCreator']
+        updateRoundAndResults(message['round'], message['result'])
         stompClient.subscribe('/players/lobby/' + activeGameId + '/player', payload => {
             processDirectMessage(JSON.parse(payload.body))
         });
@@ -146,6 +162,18 @@ function processDirectInfoMessage(message) {
 
 function startGame() {
     stompClient.send('/app/lobby/input/' + activeGameId + '/round', {}, JSON.stringify({wantToStart: true}))
+}
+
+function resetScore() {
+    if (window.confirm('Reset every player\'s score and start again from round 1?')) {
+        stompClient.send('/app/lobby/input/' + activeGameId + '/round', {}, JSON.stringify({scoreReset: true}))
+    }
+}
+
+function abortRound() {
+    if (window.confirm('End this round and return everyone to the lobby? The in-progress score will be discarded.')) {
+        stompClient.send('/app/lobby/input/' + activeGameId + '/round', {}, JSON.stringify({wantToAbort: true}))
+    }
 }
 
 function putCoin() {
@@ -170,6 +198,7 @@ function parseCookie() {
 }
 
 function returnToLobby() {
+    closeGameResults()
     lobbyScreen.show()
     createAndConnectScreen.hide()
     authScreen.hide()
@@ -178,6 +207,11 @@ function returnToLobby() {
 }
 
 function changeName() {
-    stompClient.send('/app/lobby/input/name', {}, JSON.stringify({newName: $('#newName')[0].value}))
+    let newName = $('#newName')[0].value
+    if (isBlank(newName)) {
+        showErrorMessage("Name cannot be blank")
+        return
+    }
+    stompClient.send('/app/lobby/input/name', {}, JSON.stringify({newName: newName}))
     $('#new-name-block').remove()
 }

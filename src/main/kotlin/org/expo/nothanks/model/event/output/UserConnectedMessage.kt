@@ -11,7 +11,9 @@ data class UserConnectedMessage(
     val playerNumber: Int,
     val gameStatus: GameStatus? = null,
     val params: GameParams,
-    val inviteCode: String
+    val inviteCode: String,
+    val round: Int,
+    val result: Map<Int, Score>
 ) : OutputMessage
 
 data class SafeLobbyPlayer(

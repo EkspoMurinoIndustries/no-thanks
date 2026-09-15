@@ -8,11 +8,15 @@ let startGameButton = $('#start-game-button')
 
 let gameScreen = $('#game-screen')
 let gamePlayersList = $('#game-players-block')
+let currentPlayerName = $('#current-player-name')
 let currentPlayerCoins = $('#coins-count')
 let currentPlayerCards = $('#player-cards')
 let currentCardBlock = $('#current-card')
 let currentCardCoinsBlock = $('#current-card-coins')
 let putCoinButton = $('#put-coin')
+let resetScoreButton = $('#reset-score-button')
+let startNextRoundButton = $('#start-next-round-button')
+let abortRoundButton = $('#abort-round-button')
 let errorMessage =
     $('<div class="error-message" id="error-message">\n' +
     '    <div class="error-message--appeared">\n' +
@@ -40,7 +44,7 @@ let rules =
         '<b>2)</b> Say <b>"No Thanks!"</b> so you don`t have to take the number by pressing the corresponding button. ' +
         'In this case, a counter must be put on the number and the turn continues to the next player. ' +
         'If you have no counters - the only choice is to take the number.<br>' +
-        'The game ends when there is no numbers left in the stack. <br>' +
+        'The game ends when there are no numbers left in the stack. The host can end a round early; that round is discarded and everyone returns to the lobby.<br>' +
         '<b>Important note: If you take consecutive numbers, only the lowest number in the series will count against you. </b><br>' +
         'The number of counters you have is shown on the left of your collected numbers. ' +
         'The number of counters collected on the number is shown to the right-bottom of it, while the number of ' +
@@ -53,13 +57,30 @@ let changeNameBlock =
     $('<div class="error-message" id="new-name-block">\n' +
         '    <div class="error-message--appeared">\n' +
         '        <div class="changename-message-box">\n' +
-        '            <div class="error-message-text"><br><span id="error-message-text">New name</span></div>\n' +
-        '            <input class="input" type="text" id="newName" name="newName" autofocus>' +
-        '            <button class="button error-message-button" onclick="changeName(this); return false;">OK</button>\n' +
+        '            <form onsubmit="changeName(); return false;">\n' +
+        '                <div class="error-message-text"><br><span>New name</span></div>\n' +
+        '                <input class="input" type="text" id="newName" name="newName" maxlength="15" autofocus>' +
+        '                <button class="button error-message-button" type="submit">OK</button>\n' +
+        '            </form>\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '</div>')
+let gameResultsBlock =
+    $('<div class="error-message" id="game-results-block">\n' +
+        '    <div class="error-message--appeared">\n' +
+        '        <div class="results-message-box">\n' +
+        '            <div class="result-block-header"><span class="results-title">Current Results</span></div>\n' +
+        '            <div class="completed-rounds-label" id="completed-rounds-label"></div>\n' +
+        '            <div class="scroll-wrapper"><table class="result-table" id="game-results-table"></table></div>\n' +
+        '            <button class="button error-message-button" onclick="closeGameResults(); return false;">Close</button>\n' +
         '        </div>\n' +
         '    </div>\n' +
         '</div>')
 let gameButtons = $('#game-buttons-block')
+
+function isBlank(value) {
+    return typeof value !== 'string' || value.trim() === ''
+}
 
 function renderAuthAndCreateConnectScreen() {
     let cookies = parseCookie()
@@ -68,7 +89,7 @@ function renderAuthAndCreateConnectScreen() {
         return URLInviteCode.length === 5
     }
 
-    if (cookies['no-thanks-name'] === undefined || cookies['no-thanks-token'] === undefined) {
+    if (isBlank(cookies['no-thanks-name']) || cookies['no-thanks-token'] === undefined) {
         renderAuthScreen()
     } else {
         let URLInviteCode = location.pathname.substring(1);
@@ -88,26 +109,31 @@ function renderLobbyScreen(isCreator, players, lobbyInviteCode, params) {
     gameScreen.hide()
     if (isCreator) {
         startGameButton.show()
+        resetScoreButton.show()
     } else {
         startGameButton.hide()
+        resetScoreButton.hide()
     }
     lobbyPlayersList.html('')
     players.forEach(addPlayerToLobbyList)
     $('#players-count').html(players.length)
     $('#max-players-count').html(params.maxPlayerNumber)
+    updateRoundDisplay()
 }
 
 function addPlayerToLobbyList(player) {
     let playerClass = player.number === myNumber ? "players-li current-player" : "players-li"
     let clickable = player.number === myNumber ? "onclick=\"renderChangeNameBlock(); return false;\"" : ""
+    let playerNameClass = player.number === myNumber ? "nickname editable-player-name" : "nickname"
     lobbyPlayersList.append($(
         `<li class="${playerClass}" id="lobby-player-li-${player.number}">
             <div class="player-ava-block"></div>
-            <span id="lobby-player-li-span-${player.number}" ${clickable} class="nickname\">${player.name}</span>
+            <span id="lobby-player-li-span-${player.number}" ${clickable} class="${playerNameClass}">${player.name}</span>
         </li>`))
 }
 function renderChangeNameBlock() {
     $('body').append(changeNameBlock);
+    $('#newName').val(Cookies.get('no-thanks-name') || '').trigger('focus').select()
 }
 
 function renderRulesBlock() {
@@ -146,7 +172,7 @@ function renderCreateAndConnectScreen(name) {
     authScreen.hide()
     lobbyScreen.hide()
     gameScreen.hide()
-    $('#player-name').html(name)
+    $('#player-name').text(name)
 }
 
 function renderGameScreen(playersList, currentCard, activePlayerNumber, remainingNumberCard, currentCardCoin = 0) {
@@ -155,6 +181,9 @@ function renderGameScreen(playersList, currentCard, activePlayerNumber, remainin
     lobbyScreen.hide()
     gameScreen.show()
     $('#result-screen').hide()
+    closeGameResults()
+    updateRoundDisplay()
+    abortRoundButton.toggle(amCreator)
 
     gamePlayersList.html('')
     let index = playersList.findIndex(player => player.number === myNumber)
@@ -179,6 +208,7 @@ function renderPlayButtons(isCurrent, enoughCoins) {
 
 function renderSingleGamePlayer(player, activePlayerNumber) {
     if (player.number === myNumber) {
+        currentPlayerName.text(player.name)
         updatePersonalInfo(player.coins, player.cards, activePlayerNumber === myNumber)
     } else {
         let otherPlayerClass = activePlayerNumber === player.number ? "player-card turn" : "player-card"
@@ -188,7 +218,7 @@ function renderSingleGamePlayer(player, activePlayerNumber) {
             `<div class="${otherPlayerClass}" id="${otherPlayerBlockId}">
                 <div class="nickname-player-card-block">
                     <div class="player-ava-block"></div>
-                    <span class="nickname">${player.name}</span>
+                    <span class="nickname" id="game-player-name-${player.number}">${player.name}</span>
                 </div>
                 <div class="status-player-card-block">
                     <div class="cards-card-block" id="${otherPlayerCardsBlockId}">
@@ -232,6 +262,17 @@ function closeRules(){
     rules.remove();
 }
 
+function closeGameResults(){
+    gameResultsBlock.remove()
+}
+
+function renderGameResultsBlock() {
+    $('body').append(gameResultsBlock)
+    let completedRounds = Math.max(currentRound - 1, 0)
+    $('#completed-rounds-label').text(completedRounds === 1 ? 'After 1 completed round' : `After ${completedRounds} completed rounds`)
+    renderResultsTable($('#game-results-table'), currentResults)
+}
+
 function showErrorMessage(){
     $('body').append(errorMessage);
     let errorMessageText = $('#error-message-text');
@@ -241,24 +282,95 @@ function showErrorMessage(){
         errorMessageText.text(arguments[0]);
 }
 
-function renderEndRoundScreen(results) {
+function renderEndRoundScreen(results, removedCards) {
     createAndConnectScreen.hide()
     authScreen.hide()
     lobbyScreen.hide()
     gameScreen.hide()
-    $('#result-table').html('')
     $('#result-screen').show()
-    Object.values(results).sort((a, b) => a.totalScore - b.totalScore).forEach(addResultRow)
+    startNextRoundButton.toggle(amCreator)
+    updateRoundDisplay()
+    renderResultsTable($('#result-table'), results)
+    renderRemovedCards(removedCards)
 }
 
-function addResultRow(playerResultValue) {
-    let roundScores = ""
-    playerResultValue.rounds.forEach(roundScore => roundScores+=("<td>"+roundScore+"</td>"))
-    $('#result-table').append("<tr>\n" +
-        "                    <td>"+playerResultValue['playerName']+"</td>\n" +
-                            roundScores +
-        "                    <td>"+playerResultValue['totalScore']+"</td>\n" +
-        "                </tr>")
+function renderRemovedCards(removedCards) {
+    let removedCardsList = $('#removed-cards-list').empty()
+    let sortedRemovedCards = [...(removedCards || [])].sort((a, b) => a - b)
+    sortedRemovedCards.forEach((card, index) => {
+        if (index > 0) {
+            removedCardsList.append(document.createTextNode(', '))
+        }
+        removedCardsList.append($('<span class="removed-card">').text(card).css('color', getColor(card)))
+    })
+}
+
+function updateRoundAndResults(round, results) {
+    currentRound = round || 0
+    currentResults = results || {}
+    updateRoundDisplay()
+}
+
+function updateRoundDisplay() {
+    $('#lobby-round-number').text(currentRound + 1)
+    $('#game-round-number').text(Math.max(currentRound, 1))
+    $('#result-round-number').text(Math.max(currentRound, 1))
+    $('#start-game-button').text(currentRound === 0 ? 'Start Game' : 'Start Next Round')
+    resetScoreButton.prop('disabled', !hasCompletedRounds(currentResults))
+    renderResultsTable($('#lobby-results-table'), currentResults)
+}
+
+function updateResultsFromPlayers(players) {
+    currentResults = Object.fromEntries(players.map(player => {
+        let rounds = player.score || []
+        return [player.number, {
+            playerName: player.name,
+            rounds: rounds,
+            totalScore: rounds.reduce((total, score) => total + score, 0),
+            lastRoundScore: rounds.length === 0 ? 0 : rounds[rounds.length - 1]
+        }]
+    }))
+    updateRoundDisplay()
+}
+
+function removePlayerFromResults(playerNumber) {
+    delete currentResults[playerNumber]
+    updateRoundDisplay()
+}
+
+function hasCompletedRounds(results) {
+    return Object.values(results || {}).some(result => result.rounds && result.rounds.length > 0)
+}
+
+function renderResultsTable(table, results) {
+    table.empty()
+    let sortedResults = Object.values(results || {}).sort((a, b) => a.totalScore - b.totalScore)
+    if (sortedResults.length === 0 || !hasCompletedRounds(results)) {
+        $('<tbody>').append(
+            $('<tr class="empty-results-row">').append($('<td>').text('No completed rounds yet'))
+        ).appendTo(table)
+        return
+    }
+
+    let roundCount = Math.max(...sortedResults.map(result => result.rounds.length))
+    let headerRow = $('<tr>').append($('<th>').text('Player'))
+    for (let round = 1; round <= roundCount; round++) {
+        headerRow.append($('<th>').text(`R${round}`))
+    }
+    headerRow.append($('<th>').text('Total'))
+    $('<thead>').append(headerRow).appendTo(table)
+
+    let tableBody = $('<tbody>')
+    sortedResults.forEach(playerResult => {
+        let row = $('<tr>').append($('<td>').text(playerResult.playerName))
+        for (let roundIndex = 0; roundIndex < roundCount; roundIndex++) {
+            let score = playerResult.rounds[roundIndex]
+            row.append($('<td>').text(score === undefined ? '\u2014' : score))
+        }
+        row.append($('<td>').text(playerResult.totalScore))
+        tableBody.append(row)
+    })
+    table.append(tableBody)
 }
 
 function groupCards(cards) {
@@ -314,4 +426,14 @@ function setCurrentTurnPlayer(newCurrentPlayerNumber) {
 
 function renderNewName(message) {
     $(`#lobby-player-li-span-${message['playerNumber']}`).text(message['newName'])
+    if (message['playerNumber'] === myNumber) {
+        currentPlayerName.text(message['newName'])
+    } else {
+        $(`#game-player-name-${message['playerNumber']}`).text(message['newName'])
+    }
+    let playerResult = currentResults[message['playerNumber']]
+    if (playerResult !== undefined) {
+        playerResult.playerName = message['newName']
+        updateRoundDisplay()
+    }
 }

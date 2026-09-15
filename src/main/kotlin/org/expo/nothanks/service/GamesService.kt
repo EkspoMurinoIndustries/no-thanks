@@ -33,13 +33,15 @@ class GamesService(private val gameProperties: DefaultGameProperties) {
         }
     }
 
-    fun takeCard(gameId: UUID, playerId: UUID, operation: (Lobby) -> (Unit)) {
+    fun takeCard(gameId: UUID, playerId: UUID, operation: (Lobby, List<Int>?) -> (Unit)) {
         changeGameWithLock(gameId) { lobby ->
             lobby.getGame().takeCard(playerId)
-            if (lobby.getGame().isRoundEnded()) {
+            val removedCards = if (lobby.getGame().isRoundEnded()) {
                 lobby.finishRound()
+            } else {
+                null
             }
-            operation.invoke(lobby)
+            operation.invoke(lobby, removedCards)
         }
     }
 
@@ -88,6 +90,19 @@ class GamesService(private val gameProperties: DefaultGameProperties) {
         changeGameWithLock(gameId) {
             checkOnLobbyChange(it, playerId)
             it.reset()
+            operation.invoke(it)
+        }
+    }
+
+    fun abortRound(gameId: UUID, playerId: UUID, operation: (Lobby) -> (Unit)) {
+        changeGameWithLock(gameId) {
+            if (it.creator != playerId) {
+                throw GameException("Only the host can end the round", gameId)
+            }
+            if (!it.isGameStarted()) {
+                throw GameException("Game has not been started", gameId)
+            }
+            it.discardCurrentRound()
             operation.invoke(it)
         }
     }

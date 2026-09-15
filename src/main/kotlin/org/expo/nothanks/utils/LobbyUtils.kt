@@ -144,15 +144,25 @@ fun Lobby.getPlayersInLobby(): List<SafeLobbyPlayer> {
 }
 
 
-fun Lobby.finishRound() {
+fun Lobby.finishRound(): List<Int> {
     if (game == null) {
         throw GameException("Game has not been started", gameId)
     }
+    val removedCards = game!!.deck.removedCards
     val result = game!!.calculateResult()
     result.forEach { (playerId, playerResult) ->
         players[playerId]!!.score.add(playerResult.score)
     }
     game = null
+    return removedCards
+}
+
+fun Lobby.discardCurrentRound() {
+    if (game == null) {
+        throw GameException("Game has not been started", gameId)
+    }
+    game = null
+    round = (round - 1).coerceAtLeast(0)
 }
 
 fun Lobby.createNewGame() {
@@ -174,6 +184,7 @@ fun Lobby.createNewGame() {
         deck = createDeck(this.params),
         playerCount = gamePlayers.size
     )
+    round += 1
 }
 
 fun Lobby.getResult(): Map<Int, Score> {
@@ -182,7 +193,7 @@ fun Lobby.getResult(): Map<Int, Score> {
             playerName = it.name,
             rounds = it.score,
             totalScore = it.score.sum(),
-            lastRoundScore = it.score.last()
+            lastRoundScore = it.score.lastOrNull() ?: 0
         )
     }
 }
@@ -198,6 +209,7 @@ fun Lobby.reset() {
     players.values.forEach {
         it.score.clear()
     }
+    round = 0
 }
 
 fun Lobby.getPlayer(playerId: UUID): LobbyPlayer {
