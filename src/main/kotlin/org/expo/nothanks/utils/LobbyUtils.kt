@@ -199,10 +199,28 @@ fun Lobby.getResult(): Map<Int, Score> {
 }
 
 fun Lobby.updateParams(newParams: NewParams) {
-    params.maxCard = newParams.maxCard ?: params.maxCard
-    params.minCard = newParams.minCard ?: params.minCard
-    params.initialCoinsCount = newParams.defaultCoinsCount ?: params.initialCoinsCount
-    params.extraCards = newParams.extraCards ?: params.extraCards
+    val maxCard = newParams.maxCard ?: params.maxCard
+    val minCard = newParams.minCard ?: params.minCard
+    val tokens = newParams.defaultCoinsCount ?: params.initialCoinsCount
+    val removedCards = newParams.removedCards ?: params.removedCards
+    if (maxCard !in 35..55) {
+        throw GameException("Biggest card must be between 35 and 55", gameId)
+    }
+    if (minCard !in 1..maxCard) {
+        throw GameException("Smallest card must be between 1 and the biggest card ($maxCard)", gameId)
+    }
+    if (removedCards < 0 || removedCards >= maxCard - minCard + 1) {
+        throw GameException("Leave at least one card in the round", gameId)
+    }
+    if (tokens !in 0..10000) {
+        throw GameException("Initial tokens must be between 0 and 10000", gameId)
+    }
+    params.maxCard = maxCard
+    params.minCard = minCard
+    params.initialCoinsCount = tokens
+    params.removedCards = removedCards
+    params.useDefaultTokens = newParams.useDefaultTokens
+        ?: if (newParams.defaultCoinsCount != null) false else params.useDefaultTokens
 }
 
 fun Lobby.reset() {

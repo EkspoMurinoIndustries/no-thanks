@@ -1,3 +1,17 @@
+#settings-menu {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid white;
+    text-align: left;
+}
+
+#settings-menu h2 { margin-bottom: 20px; }
+#settings-menu label { display: block; }
+#settings-menu .input { margin: 8px 0 16px; width: 120px; height: 42px; font-size: 22px; }
+#settings-card-range { margin-bottom: 16px; font-size: 14px; }
+.settings-help { margin: 12px 0 16px; font-size: 14px; line-height: 1.5; }
+#settings-menu input:focus-visible { outline: 2px solid white; outline-offset: 3px; }
+
 * {
     padding: 0;
     margin: 0;

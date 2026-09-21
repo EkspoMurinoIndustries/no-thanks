@@ -90,7 +90,7 @@ internal class LobbyRoundUtilsTest {
                 initialCoinsCount = 11,
                 minCard = 3,
                 maxCard = 5,
-                extraCards = 1,
+                removedCards = 1,
                 maxPlayerNumber = 8
             )
         ).also {

@@ -72,7 +72,9 @@ class GamesService(private val gameProperties: DefaultGameProperties) {
             if (it.players.size < gameProperties.minPlayerNumber) {
                 throw GameException("Sorry, minimum number of players is ${gameProperties.minPlayerNumber}", gameId)
             }
-            it.params.initialCoinsCount = gameProperties.coinsMap[it.players.size] ?: gameProperties.defaultCoinsCount
+            if (it.params.useDefaultTokens) {
+                it.params.initialCoinsCount = gameProperties.coinsMap.getValue(it.players.size)
+            }
             it.createNewGame()
             operation.invoke(it)
         }
@@ -81,7 +83,18 @@ class GamesService(private val gameProperties: DefaultGameProperties) {
     fun changeParams(gameId: UUID, playerId: UUID, params: NewParams, operation: (Lobby) -> (Unit)) {
         changeGameWithLock(gameId) {
             checkOnLobbyChange(it, playerId)
-            it.updateParams(params)
+            if (params.resetToDefaults) {
+                val defaults = getDefaultGameParams()
+                it.updateParams(NewParams(
+                    minCard = defaults.minCard,
+                    maxCard = defaults.maxCard,
+                    removedCards = defaults.removedCards,
+                    defaultCoinsCount = defaults.initialCoinsCount,
+                    useDefaultTokens = true
+                ))
+            } else {
+                it.updateParams(params)
+            }
             operation.invoke(it)
         }
     }
@@ -109,10 +122,10 @@ class GamesService(private val gameProperties: DefaultGameProperties) {
 
     private fun checkOnLobbyChange(lobby: Lobby, playerId: UUID) {
         if (lobby.isGameStarted()) {
-            throw IllegalStateException("Game has been already started")
+            throw GameException("Settings and lobby controls are unavailable during a round", lobby.gameId)
         }
         if (lobby.creator != playerId) {
-            throw IllegalStateException("Player is not creator")
+            throw GameException("Only the host can change the lobby", lobby.gameId)
         }
     }
 
@@ -190,10 +203,11 @@ class GamesService(private val gameProperties: DefaultGameProperties) {
     }
 
     private fun getDefaultGameParams() : GameParams = GameParams(
-        initialCoinsCount = gameProperties.defaultCoinsCount,
+        initialCoinsCount = gameProperties.coinsMap.getValue(gameProperties.minPlayerNumber),
         minCard = gameProperties.minCard,
         maxCard = gameProperties.maxCard,
-        extraCards = gameProperties.extraCards,
-        maxPlayerNumber = gameProperties.maxPlayerNumber
+        removedCards = gameProperties.removedCards,
+        maxPlayerNumber = gameProperties.maxPlayerNumber,
+        useDefaultTokens = true
     )
 }

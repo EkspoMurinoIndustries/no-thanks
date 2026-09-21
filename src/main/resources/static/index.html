@@ -81,9 +81,29 @@
                         </div>
                         <div class="round-label">Next round: <span id="lobby-round-number">1</span></div>
                         <div class="lobby-action-buttons">
+                            <button class="button secondary-button" id="settings-button" style="display: none" type="button" onclick="openSettings()">Settings</button>
                             <button class="button" id="start-game-button" type="button" onclick="startGame(); return false;">Start Game</button>
                             <button class="button secondary-button" id="reset-score-button" type="button" onclick="resetScore(); return false;">Reset Score</button>
                         </div>
+                        <form id="settings-menu" style="display: none" onsubmit="saveSettings(); return false;" aria-labelledby="settings-title">
+                            <h2 id="settings-title">Game settings</h2>
+                            <label for="settings-min-card">Smallest card</label>
+                            <input class="input" id="settings-min-card" type="number" min="1" max="35" step="1" required>
+                            <label for="settings-max-card">Biggest card</label>
+                            <input class="input" id="settings-max-card" type="number" min="35" max="55" step="1" required>
+                            <p id="settings-card-range"></p>
+                            <label for="settings-removed-cards">Cards removed each round</label>
+                            <input class="input" id="settings-removed-cards" type="number" min="0" step="1" required>
+                            <label for="settings-tokens">Initial tokens per player</label>
+                            <input class="input" id="settings-tokens" type="number" min="0" max="10000" step="1" placeholder="Auto">
+                            <label><input id="settings-default-tokens" type="checkbox" onchange="toggleDefaultTokens()"> Use tokens based on player count</label>
+                            <p class="settings-help">3–5 players: 11 tokens · 6 players: 9 · 7 players: 7 · 8 players: 6.<br>Enter a token count to override this for every player.</p>
+                            <div class="lobby-action-buttons">
+                                <button class="button secondary-button" type="button" onclick="resetSettings()">Reset to defaults</button>
+                                <button class="button" type="submit">Save settings</button>
+                                <button class="button secondary-button" type="button" onclick="closeSettings()">Cancel</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

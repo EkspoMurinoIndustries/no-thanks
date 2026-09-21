@@ -35,7 +35,8 @@ let rules =
         'To score the fewest points; players score points each time they collect a number and subtract points for each counter they hold at the end of the game.<br>' +
         '<h3 style="margin-bottom: 0.2em; margin-top: 0.2em">Game proccess</h3> ' +
         'Players make turns one after another. There is a common stack of numbers in front of players with a top number revealed. ' +
-        'The stack consists of 33 consecutive numbers from 3 to 35, <b>with nine random numbers removed each round. </b><br>' +
+        'By default, the stack contains cards from 3 to 35, <b>with nine random cards removed each round.</b> ' +
+        'The host can change the card range, removed card count, and initial tokens in the lobby Settings menu.<br>' +
         'During turn, a number is presented to a player. ' +
         'The player has two options:<br>' +
         '<b>1)</b> Take the number by pressing the <b>"Take number"</b> button. In this case, the player is scored these penalty points. ' +
@@ -102,6 +103,9 @@ function renderAuthAndCreateConnectScreen() {
 }
 
 function renderLobbyScreen(isCreator, players, lobbyInviteCode, params) {
+    currentParams = params
+    closeSettings()
+    $('#settings-button').toggle(isCreator)
     $('#invite-code').html(lobbyInviteCode)
     lobbyScreen.show()
     createAndConnectScreen.hide()
@@ -176,6 +180,7 @@ function renderCreateAndConnectScreen(name) {
 }
 
 function renderGameScreen(playersList, currentCard, activePlayerNumber, remainingNumberCard, currentCardCoin = 0) {
+    closeSettings()
     createAndConnectScreen.hide()
     authScreen.hide()
     lobbyScreen.hide()
@@ -408,8 +413,23 @@ function getColor(number) {
     if (number < 3) {
         number = 3
     }
-    if (number > 35) {
-        number = 35
+    if (number > 20) {
+        // Ease through yellow and light reddish brown before the dark reference color.
+        const stops = [
+            [20, [0, 255, 0]],
+            [25, [255, 235, 80]],
+            [30, [205, 125, 95]],
+            [35, [100, 24, 20]],
+            [55, [60, 30, 12]]
+        ]
+        number = Math.min(number, 55)
+        const endIndex = stops.findIndex(([value]) => value >= number)
+        const [startValue, start] = stops[endIndex - 1]
+        const [endValue, end] = stops[endIndex]
+        const progress = (number - startValue) / (endValue - startValue)
+        const [red, green, blue] = start.map((channel, index) =>
+            Math.round(channel + (end[index] - channel) * progress))
+        return `rgb(${red},${green},${blue})`
     }
     let dif = (number - 3) * 15
     let blue = 255 - Math.min(dif, 255)
