@@ -39,7 +39,7 @@ let rules =
         'The host can change the card range, removed card count, and initial tokens in the lobby Settings menu.<br>' +
         'During turn, a number is presented to a player. ' +
         'The player has two options:<br>' +
-        '<b>1)</b> Take the number by pressing the <b>"Take number"</b> button. In this case, the player is scored these penalty points. ' +
+        '<b>1)</b> Take the card by pressing the <b>"Take Card"</b> button. In this case, the player is scored these penalty points. ' +
         'The number remains in player`s possesion until the end of the round and is public. Any counters collected on the number are also received. ' +
         'After taking the number, the next number in the stack is revealed and the player must make the same choice. <br>' +
         '<b>2)</b> Say <b>"No Thanks!"</b> so you don`t have to take the number by pressing the corresponding button. ' +
@@ -194,7 +194,7 @@ function renderGameScreen(playersList, currentCard, activePlayerNumber, remainin
     let index = playersList.findIndex(player => player.number === myNumber)
     let rightPlyerList = playersList.slice(index).concat(playersList.slice(0, index))
     rightPlyerList.forEach(player => renderSingleGamePlayer(player, activePlayerNumber))
-    currentCardBlock.html(currentCard)
+    renderCurrentCard(currentCard)
     currentCardCoinsBlock.html(currentCardCoin)
     renderPlayButtons(activePlayerNumber === myNumber)
     updateRemainingNumberCards(remainingNumberCard)
@@ -209,6 +209,20 @@ function renderPlayButtons(isCurrent, enoughCoins) {
     } else {
         gameButtons.hide()
     }
+}
+
+function renderCurrentCard(number) {
+    currentCardBlock.empty().attr('aria-label', `Card ${number}`)
+    const fallback = $('<span class="current-card-fallback">').text(number)
+    currentCardBlock.append(fallback)
+    // Custom decks may include 1 or 2, for which there is no artwork.
+    if (number < 3 || number > 55) return
+    const artwork = $('<img class="current-card-artwork">')
+        .attr({alt: `Card ${number}`, width: 244, height: 366})
+        .on('load', () => fallback.hide())
+        .on('error', function () { $(this).remove(); fallback.show() })
+    artwork.attr('src', `img/cards/${number}.png`)
+    currentCardBlock.append(artwork)
 }
 
 function renderSingleGamePlayer(player, activePlayerNumber) {

@@ -107,7 +107,7 @@ function processTopicMessage(message) {
         }
         updateRemainingNumberCards(message['remainingNumberCards'])
         currentCardCoinsBlock.html('0')
-        currentCardBlock.html(message['newCardNumber'])
+        renderCurrentCard(message['newCardNumber'])
     }
     if (message['type'] === "PutCoinMessage") {
         currentCardCoinsBlock.html(message['currentCardCoins'])
