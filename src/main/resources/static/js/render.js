@@ -126,6 +126,7 @@ function renderLobbyScreen(isCreator, players, lobbyInviteCode, params) {
 }
 
 function addPlayerToLobbyList(player) {
+    $(`#lobby-player-li-${player.number}`).remove()
     let playerClass = player.number === myNumber ? "players-li current-player" : "players-li"
     let clickable = player.number === myNumber ? "onclick=\"renderChangeNameBlock(); return false;\"" : ""
     let playerNameClass = player.number === myNumber ? "nickname editable-player-name" : "nickname"
@@ -135,6 +136,7 @@ function addPlayerToLobbyList(player) {
             <span id="lobby-player-li-span-${player.number}" ${clickable} class="${playerNameClass}">${player.name}</span>
         </li>`))
     $(`#lobby-player-li-${player.number} .avatar-slot`).replaceWith(renderAvatar(player))
+    if (player.disconnected) playerDisconnected(player)
 }
 function renderChangeNameBlock() {
     $('body').append(changeNameBlock);
@@ -250,6 +252,7 @@ function renderSingleGamePlayer(player, activePlayerNumber) {
             </div>`)
         gamePlayersList.append(otherPlayerDiv)
         otherPlayerDiv.find('.avatar-slot').replaceWith(renderAvatar(player))
+        if (player.disconnected) playerDisconnected(player)
     }
 }
 

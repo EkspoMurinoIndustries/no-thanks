@@ -10,13 +10,18 @@ import org.expo.nothanks.model.lobby.GameParams
 import org.expo.nothanks.model.lobby.Lobby
 import org.expo.nothanks.utils.*
 import org.springframework.stereotype.Service
+import org.springframework.beans.factory.annotation.Value
+import kotlin.concurrent.withLock
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 @Service
-class GamesService(private val gameProperties: DefaultGameProperties) {
+class GamesService(
+    private val gameProperties: DefaultGameProperties,
+    @Value("\${no-thanks.reconnect-grace-ms:300000}") private val reconnectGraceMillis: Long = 300000
+) {
 
     private val readWriteLock: ReadWriteLock = ReentrantReadWriteLock()
     private val writeLock: Lock = readWriteLock.writeLock()
@@ -25,6 +30,8 @@ class GamesService(private val gameProperties: DefaultGameProperties) {
     private val gameIdToLobby: MutableMap<UUID, Lobby> = mutableMapOf()
     private val inviteCodeToLobby: MutableMap<String, Lobby> = mutableMapOf()
     private val lobbyByUserId: MutableMap<UUID, Lobby> = mutableMapOf()
+    private val sessionByUserId: MutableMap<UUID, String> = mutableMapOf()
+    private val disconnectDeadline: MutableMap<UUID, Long> = mutableMapOf()
 
     fun putCoin(gameId: UUID, playerId: UUID, operation: (Lobby) -> (Unit)) {
         changeGameWithLock(gameId) { lobby ->
@@ -48,6 +55,7 @@ class GamesService(private val gameProperties: DefaultGameProperties) {
     fun createLobby(creator: UUID): Lobby {
         writeLock.lock()
         try {
+            lobbyByUserId[creator]?.let { return it }
             var inviteCode = createInviteCode()
             //Check on duplicates
             while (inviteCodeToLobby.containsKey(inviteCode)) {
@@ -69,6 +77,9 @@ class GamesService(private val gameProperties: DefaultGameProperties) {
     fun startNewRound(gameId: UUID, playerId: UUID, operation: (Lobby) -> (Unit)) {
         changeGameWithLock(gameId) {
             checkOnLobbyChange(it, playerId)
+            if (it.disconnectedPLayers.isNotEmpty()) {
+                throw GameException("Wait for disconnected players to return before starting a round", gameId)
+            }
             if (it.players.size < gameProperties.minPlayerNumber) {
                 throw GameException("Sorry, minimum number of players is ${gameProperties.minPlayerNumber}", gameId)
             }
@@ -129,37 +140,69 @@ class GamesService(private val gameProperties: DefaultGameProperties) {
         }
     }
 
-    fun addPlayerToLobby(gameId: UUID, playerId: UUID, name: String, operation: (Lobby, Boolean) -> (Unit)) {
+    fun addPlayerToLobby(gameId: UUID, playerId: UUID, name: String, sessionId: String? = null, operation: (Lobby, Boolean) -> (Unit)) {
         changeGameWithLock(gameId) { lobby ->
-            if (lobby.canBeReconnected(playerId)) {
+            val previousLobby = lobbyByUserId[playerId]
+            if (previousLobby != null && previousLobby !== lobby) {
+                throw GameException("You are already in another lobby", gameId)
+            }
+            val newPlayer = !lobby.playerAlreadyInGame(playerId)
+            if (!newPlayer) {
                 lobby.connectPlayer(playerId)
-                operation.invoke(lobby, false)
-            } else if (!lobby.playerAlreadyInGame(playerId) && lobby.players.count() < gameProperties.maxPlayerNumber) {
+            } else {
+                if (lobby.isGameStarted()) throw GameException("Wait until the round ends to join", gameId)
+                if (lobby.players.size >= gameProperties.maxPlayerNumber) throw GameException("Lobby is full", gameId)
                 lobby.addPlayer(playerId, name)
-                operation.invoke(lobby, true)
             }
             lobbyByUserId[playerId] = lobby
+            disconnectDeadline.remove(playerId)
+            if (sessionId != null) sessionByUserId[playerId] = sessionId
+            operation.invoke(lobby, newPlayer)
         }
     }
 
-    fun disconnectPlayerFromLobby(playerId: UUID, operation: (Lobby, SafeLobbyPlayer) -> (Unit)) {
-        val gameId = gameIdByPlayerId(playerId)
-        changeGameWithLock(gameId) { lobby ->
+    fun disconnectPlayerFromLobby(playerId: UUID, sessionId: String? = null, operation: (Lobby, SafeLobbyPlayer) -> (Unit)) {
+        writeLock.withLock {
+            val lobby = lobbyByUserId[playerId] ?: return
+            // Ignore duplicate events and late closes from an older connection.
+            if (sessionId != null && sessionByUserId[playerId] != sessionId) return
+            if (lobby.canBeReconnected(playerId)) return
             val disconnectedPlayer = lobby.getPlayerInLobby(playerId)
             lobby.disconnectPlayer(playerId)
-            if (lobby.canBeReconnected(playerId)) {
-                lobbyByUserId[playerId] = lobby
-            } else {
-                lobbyByUserId.remove(playerId)
-                if (lobby.creator == playerId) {
+            sessionByUserId.remove(playerId)
+            disconnectDeadline[playerId] = System.currentTimeMillis() + reconnectGraceMillis
+            operation.invoke(lobby, disconnectedPlayer)
+        }
+    }
+
+    fun expireDisconnectedPlayers(
+        now: Long = System.currentTimeMillis(),
+        onClosed: (UUID) -> Unit,
+        onPlayerLeft: (Lobby, SafeLobbyPlayer) -> Unit
+    ) {
+        writeLock.withLock {
+            for (lobby in gameIdToLobby.values.toList()) {
+                val hostDeadline = disconnectDeadline[lobby.creator]
+                if (hostDeadline != null && now >= hostDeadline) {
+                    lobby.setNotActive()
                     deleteLobby(lobby)
+                    onClosed(lobby.gameId)
+                    continue
+                }
+                // Preserve active-round participants and scores; a pre-game guest's seat can expire.
+                if (!lobby.isGameStarted()) {
+                    for (playerId in lobby.disconnectedPLayers.toList()) {
+                        val deadline = disconnectDeadline[playerId] ?: continue
+                        if (now < deadline || lobby.players[playerId]!!.score.isNotEmpty()) continue
+                        val player = lobby.getPlayerInLobby(playerId)
+                        lobby.removePlayer(playerId)
+                        lobby.disconnectedPLayers.remove(playerId)
+                        lobbyByUserId.remove(playerId)
+                        disconnectDeadline.remove(playerId)
+                        onPlayerLeft(lobby, player)
+                    }
                 }
             }
-            if (lobby.shouldBeDeleted()) {
-                lobby.setNotActive()
-                deleteLobby(lobby)
-            }
-            operation.invoke(lobby, disconnectedPlayer)
         }
     }
 
@@ -170,6 +213,8 @@ class GamesService(private val gameProperties: DefaultGameProperties) {
             val lobbyOfPlayer = lobbyByUserId[it]
             if (lobbyOfPlayer != null && lobbyOfPlayer.gameId == lobby.gameId) {
                 lobbyByUserId.remove(it)
+                sessionByUserId.remove(it)
+                disconnectDeadline.remove(it)
             }
         }
     }

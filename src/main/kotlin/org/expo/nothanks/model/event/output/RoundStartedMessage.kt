@@ -14,5 +14,6 @@ data class SafeGamePlayer(
     val name: String,
     val cards: Set<Int> = setOf(),
     var coins: Int,
-    val avatar: String? = null
+    val avatar: String? = null,
+    val disconnected: Boolean = false
 )

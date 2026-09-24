@@ -16,6 +16,13 @@ let amCreator = false
 let currentRound = 0
 let currentResults = {}
 let currentParams = {}
+let desiredConnection = null
+let connectionPending = false
+let connectionGeneration = 0
+let reconnectTimer
+let connectionTimeout
+let gameSubscriptions = []
+let backgroundedAt = null
 
 renderAuthAndCreateConnectScreen()
 
@@ -39,41 +46,105 @@ function auth() {
     });
 }
 
+function setConnectionStatus(message = '') {
+    $('#connection-status').text(message).toggle(Boolean(message))
+    $('.background').prop('inert', Boolean(message))
+}
+
+function stopConnection() {
+    connectionGeneration++
+    clearTimeout(reconnectTimer)
+    clearTimeout(connectionTimeout)
+    connectionPending = false
+    gameSubscriptions = []
+    const previousSocket = sock
+    sock = undefined
+    stompClient = undefined
+    if (previousSocket) previousSocket.close()
+}
+
+function unavailableLobby(message) {
+    desiredConnection = null
+    stopConnection()
+    activeGameId = undefined
+    amCreator = false
+    currentRound = 0
+    currentResults = {}
+    closeAvatarEditor()
+    closeGameResults()
+    closeSettings()
+    $('#result-screen').hide()
+    window.history.replaceState({}, '', '/')
+    setConnectionStatus()
+    renderAuthAndCreateConnectScreen()
+    showErrorMessage(message)
+}
+
 function connectAndSend(message) {
-    let cookies = parseCookie()
-    let name = cookies['no-thanks-name']
+    const name = parseCookie()['no-thanks-name']
     if (isBlank(name)) {
-        showErrorMessage("Name cannot be blank")
+        showErrorMessage('Name cannot be blank')
         return
     }
-    message.name = name
-    message.avatar = savedAvatar()
-    if (sock !== undefined && stompClient !== undefined && !stompClient.connected) {
-        sock = new SockJS("/no-thanks");
-        stompClient = Stomp.over(sock);
+    desiredConnection = {...message, name, avatar: savedAvatar()}
+    if (connectionPending) return
+    if (stompClient && stompClient.connected) {
+        connectionPending = true
+        setConnectionStatus('Connecting to lobby...')
+        connectionTimeout = setTimeout(() => {
+            stopConnection()
+            openConnection()
+        }, 3000)
+        stompClient.send('/app/lobby/input/connect', {}, JSON.stringify(desiredConnection))
+        return
     }
-    if (sock === undefined) {
-        sock = new SockJS("/no-thanks");
-    }
-    if (stompClient === undefined) {
-        stompClient = Stomp.over(sock);
-    }
-    if (stompClient.connected) {
-        stompClient.send('/app/lobby/input/connect', {}, JSON.stringify(message))
-    } else {
-        stompClient.connect({}, () => {
-            stompClient.subscribe('/players/lobby/info', payload => {
-                processDirectInfoMessage(JSON.parse(payload.body))
-            });
-            stompClient.send('/app/lobby/input/connect', {}, JSON.stringify(message))
-        }, function(message) {
-            if (message.startsWith("Whoops! Lost connection to")) {
-                renderAuthAndCreateConnectScreen()
-                showErrorMessage("You have been disconnected")
-            }
-        });
-    }
+    openConnection()
 }
+
+function openConnection() {
+    if (!desiredConnection || connectionPending || document.hidden) return
+    stopConnection()
+    connectionPending = true
+    desiredConnection = {...desiredConnection, name: parseCookie()['no-thanks-name'], avatar: savedAvatar()}
+    const generation = connectionGeneration
+    const socket = new SockJS('/no-thanks')
+    const client = Stomp.over(socket)
+    sock = socket
+    stompClient = client
+    setConnectionStatus(activeGameId ? 'Reconnecting to your game...' : 'Connecting to lobby...')
+    const retry = () => {
+        if (generation !== connectionGeneration) return
+        stopConnection()
+        closeAvatarEditor()
+        setConnectionStatus('Connection lost. Reconnecting...')
+        reconnectTimer = setTimeout(openConnection, 2000)
+    }
+    connectionTimeout = setTimeout(retry, 10000)
+    client.connect({}, () => {
+        if (generation !== connectionGeneration) return
+        client.subscribe('/players/lobby/info', payload => {
+            if (generation === connectionGeneration) processDirectInfoMessage(JSON.parse(payload.body))
+        })
+        client.send('/app/lobby/input/connect', {}, JSON.stringify(desiredConnection))
+    }, retry)
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        backgroundedAt = Date.now()
+        return
+    }
+    if (desiredConnection && backgroundedAt !== null && Date.now() - backgroundedAt > 1000) {
+        // Refresh state first; replace a stale socket if it cannot return a snapshot.
+        connectAndSend(desiredConnection)
+    } else if (desiredConnection && (!stompClient || !stompClient.connected)) {
+        openConnection()
+    }
+    backgroundedAt = null
+})
+window.addEventListener('online', () => {
+    if (desiredConnection && (!stompClient || !stompClient.connected)) openConnection()
+})
 
 function createGame() {
     connectAndSend({createGame: true})
@@ -87,6 +158,10 @@ function connectGame(inviteCode = undefined) {
 }
 
 function processTopicMessage(message) {
+    if (message.type === 'LobbyClosedMessage') {
+        unavailableLobby('The lobby closed because the host did not reconnect in time.')
+        return
+    }
     if (message.type === 'PlayerAvatarChangedMessage') {
         updateAvatar(message.playerNumber, message.avatar)
         if (message.playerNumber === myNumber) {
@@ -165,18 +240,30 @@ function processDirectMessage(message) {
 }
 
 function processDirectInfoMessage(message) {
+    if (message.type === 'ErrorMessage') {
+        unavailableLobby(message.message)
+        return
+    }
     if (message['type'] === "UserConnectedMessage") {
-        window.history.pushState({},"", message['inviteCode']);
+        clearTimeout(connectionTimeout)
+        clearTimeout(reconnectTimer)
+        connectionPending = false
+        desiredConnection = {inviteCode: message.inviteCode, name: parseCookie()['no-thanks-name'], avatar: savedAvatar()}
+        gameSubscriptions.forEach(subscription => subscription.unsubscribe())
+        gameSubscriptions = []
+        window.history.replaceState({}, '', message.inviteCode)
         myNumber = message['playerNumber']
         activeGameId = message['gameId']
         amCreator = message['isCreator']
         updateRoundAndResults(message['round'], message['result'])
-        stompClient.subscribe('/players/lobby/' + activeGameId + '/player', payload => {
+        gameSubscriptions.push(stompClient.subscribe('/players/lobby/' + activeGameId + '/player', payload => {
             processDirectMessage(JSON.parse(payload.body))
-        });
-        stompClient.subscribe("/lobby/" + activeGameId, payload => {
+        }))
+        gameSubscriptions.push(stompClient.subscribe('/lobby/' + activeGameId, payload => {
             processTopicMessage(JSON.parse(payload.body))
-        });
+        }))
+        setConnectionStatus()
+        $('#result-screen').hide()
         renderLobbyScreen(message['isCreator'], message['players'], message['inviteCode'], message['params'])
         if (message['isStarted'] === true) {
             let game = message['gameStatus']

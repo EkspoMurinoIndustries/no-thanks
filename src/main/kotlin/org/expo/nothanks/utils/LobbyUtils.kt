@@ -47,14 +47,6 @@ fun Lobby.setNotActive() {
     active = false
 }
 
-fun Lobby.shouldBeDeleted(): Boolean {
-    return if (isGameStarted()) {
-        getGame().playerCount == disconnectedPLayers.size
-    } else {
-        players.isEmpty()
-    }
-}
-
 fun Lobby.gameStatusOrNull(playerId: UUID): GameStatus? {
     return if (isGameStarted()) {
         val game = getGame()
@@ -80,7 +72,8 @@ fun Lobby.getSafeLobbyPlayers(): List<SafeLobbyPlayer> {
             number = it.number,
             name = it.name,
             score = it.score,
-            avatar = it.avatar
+            avatar = it.avatar,
+            disconnected = it.id in disconnectedPLayers
         )
     }
 }
@@ -89,11 +82,7 @@ fun Lobby.disconnectPlayer(playerId: UUID) {
     if (!players.values.any { it.id == playerId }) {
         throw PlayerException("Impossible to disconnect player from this game", gameId, playerId)
     }
-    if (isGameStarted() || getPlayerInLobby(playerId).score.isNotEmpty()) {
-        disconnectedPLayers.add(playerId)
-    } else {
-        removePlayer(playerId)
-    }
+    disconnectedPLayers.add(playerId)
 }
 
 fun Lobby.canBeReconnected(playerId: UUID): Boolean {
@@ -111,17 +100,18 @@ fun Lobby.getGame(): Game {
 
 fun Lobby.getPlayersInGame(): List<SafeGamePlayer> {
     return getGame().playerSequence().map {
-        it.toSafeGamePlayer(players[it.id]!!.name, players[it.id]!!.avatar)
+        it.toSafeGamePlayer(players[it.id]!!.name, players[it.id]!!.avatar, it.id in disconnectedPLayers)
     }.toList()
 }
 
-fun Player.toSafeGamePlayer(name: String, avatar: String? = null): SafeGamePlayer {
+fun Player.toSafeGamePlayer(name: String, avatar: String? = null, disconnected: Boolean = false): SafeGamePlayer {
     return SafeGamePlayer(
         name = name,
         number = this.number,
         cards = this.cards,
         coins = this.coins,
-        avatar = avatar
+        avatar = avatar,
+        disconnected = disconnected
     )
 }
 
@@ -131,7 +121,8 @@ fun Lobby.getPlayerInLobby(playerId: UUID): SafeLobbyPlayer {
             name = it.name,
             number = it.number,
             score = it.score,
-            avatar = it.avatar
+            avatar = it.avatar,
+            disconnected = it.id in disconnectedPLayers
         )
     } ?: throw PlayerException("Player has not been found", gameId, playerId)
 }
@@ -142,7 +133,8 @@ fun Lobby.getPlayersInLobby(): List<SafeLobbyPlayer> {
             name = it.name,
             number = it.number,
             score = it.score,
-            avatar = it.avatar
+            avatar = it.avatar,
+            disconnected = it.id in disconnectedPLayers
         )
     }.toList()
 }

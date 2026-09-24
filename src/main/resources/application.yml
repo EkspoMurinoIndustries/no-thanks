@@ -1,4 +1,5 @@
 no-thanks:
+  reconnect-grace-ms: 300000
   cookies:
     id: no-thanks-token
     name: no-thanks-name

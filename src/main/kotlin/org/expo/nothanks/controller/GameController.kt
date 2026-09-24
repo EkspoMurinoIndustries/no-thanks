@@ -6,6 +6,7 @@ import org.expo.nothanks.exception.NoThanksException
 import org.expo.nothanks.model.event.input.ChangeNameMessage
 import org.expo.nothanks.model.event.input.ChangeAvatarMessage
 import org.expo.nothanks.model.event.output.UserConnectedMessage
+import org.expo.nothanks.model.event.output.ErrorMessage
 import org.expo.nothanks.model.event.input.ConnectToGameMessage
 import org.expo.nothanks.model.event.input.GameChangingMessage
 import org.expo.nothanks.model.event.input.PlayerTurnMessage
@@ -15,6 +16,7 @@ import org.expo.nothanks.utils.*
 import org.springframework.messaging.handler.annotation.DestinationVariable
 import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.messaging.handler.annotation.Payload
+import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.simp.annotation.SendToUser
 import org.springframework.stereotype.Controller
 import java.security.Principal
@@ -29,7 +31,16 @@ class GameController(
 
     @MessageMapping("/lobby/input/connect")
     @SendToUser("/lobby/info")
-    fun gameManager(@Payload message: ConnectToGameMessage, principal: Principal): Any {
+    fun gameManager(@Payload message: ConnectToGameMessage, principal: Principal,
+                    @Header("simpSessionId") sessionId: String? = null): Any {
+        return try {
+            connectToLobby(message, principal, sessionId)
+        } catch (e: NoThanksException) {
+            ErrorMessage(e.publicMessage)
+        }
+    }
+
+    private fun connectToLobby(message: ConnectToGameMessage, principal: Principal, sessionId: String?): UserConnectedMessage {
         val token = principal.getPlayerId()
         val playerName = message.name.validatedPlayerName()
         val avatar = message.avatar.validatedAvatar()
@@ -39,7 +50,7 @@ class GameController(
             gamesService.gameIdByInviteCode(message.inviteCode ?: throw NoThanksException("Empty invite code"))
         }
         lateinit var response: UserConnectedMessage
-        gamesService.addPlayerToLobby(gameId, token, playerName) { lobby, newPlayer ->
+        gamesService.addPlayerToLobby(gameId, token, playerName, sessionId) { lobby, newPlayer ->
             lobby.getPlayer(token).avatar = avatar
             if (newPlayer) {
                 notificationService.lobbyConnection(lobby, token)
