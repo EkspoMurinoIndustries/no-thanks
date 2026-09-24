@@ -236,6 +236,11 @@
 
 @media screen and (max-width: 835px) {
 
+    .game-meta-controls {
+        /* Clear the Rules button (10px offset, 50px height, and 5px shadow). */
+        margin-top: 80px;
+    }
+
     #game-screen .form-block {
         overflow: scroll;
         overflow-x: hidden;
