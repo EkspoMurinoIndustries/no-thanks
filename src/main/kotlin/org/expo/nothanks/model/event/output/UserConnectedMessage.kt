@@ -19,7 +19,9 @@ data class UserConnectedMessage(
 data class SafeLobbyPlayer(
     val number: Int,
     val name: String,
-    val score: MutableList<Int> = mutableListOf()
+    val score: MutableList<Int> = mutableListOf(),
+    val avatar: String? = null,
+    val disconnected: Boolean = false
 )
 
 data class GameStatus(

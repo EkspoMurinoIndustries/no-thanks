@@ -4,6 +4,7 @@ data class GameParams(
     var initialCoinsCount: Int,
     var minCard: Int,
     var maxCard: Int,
-    var extraCards: Int,
-    var maxPlayerNumber: Int
+    var removedCards: Int,
+    var maxPlayerNumber: Int,
+    var useDefaultTokens: Boolean = false
 )

@@ -1,3 +1,14 @@
+## Mobile reconnection
+
+Temporary disconnects keep a player's seat and game state. The browser reconnects
+automatically and refreshes the game when returning from the background.
+`no-thanks.reconnect-grace-ms` in `application.yml` defaults to five minutes.
+If the host remains disconnected beyond that period, the lobby closes; cleanup
+runs every five seconds. Disconnected guests without scores are removed from a
+pre-game lobby after the same grace period. Active-round participants and score
+history are retained while the host's lobby remains open. A new round waits for
+all retained players to reconnect.
+
 ## Tests
 
 Run the Kotlin/Spring tests:

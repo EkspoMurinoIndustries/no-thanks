@@ -1,12 +1,12 @@
 no-thanks:
+  reconnect-grace-ms: 300000
   cookies:
     id: no-thanks-token
     name: no-thanks-name
   default-game-params:
-    default-coins-count: 6
     min-card: 3
     max-card: 35
-    extra-cards: 9
+    removed-cards: 9
     min-player-number: 2
     max-player-number: 8
     coins-map:

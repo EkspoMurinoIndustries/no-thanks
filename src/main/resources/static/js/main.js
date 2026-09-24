@@ -1,3 +1,11 @@
+const settingsMinCardInput = $('#settings-min-card')
+const settingsMaxCardInput = $('#settings-max-card')
+const settingsRemovedCardsInput = $('#settings-removed-cards')
+const settingsDefaultTokensInput = $('#settings-default-tokens')
+const settingsTokensInput = $('#settings-tokens')
+const settingsMenu = $('#settings-menu')
+const settingsCardRange = $('#settings-card-range')
+
 let contentTypeHeader = {'Content-Type': 'application/json; charset=UTF-8'}
 
 let sock
@@ -7,6 +15,14 @@ let myNumber
 let amCreator = false
 let currentRound = 0
 let currentResults = {}
+let currentParams = {}
+let desiredConnection = null
+let connectionPending = false
+let connectionGeneration = 0
+let reconnectTimer
+let connectionTimeout
+let gameSubscriptions = []
+let backgroundedAt = null
 
 renderAuthAndCreateConnectScreen()
 
@@ -30,40 +46,105 @@ function auth() {
     });
 }
 
+function setConnectionStatus(message = '') {
+    $('#connection-status').text(message).toggle(Boolean(message))
+    $('.background').prop('inert', Boolean(message))
+}
+
+function stopConnection() {
+    connectionGeneration++
+    clearTimeout(reconnectTimer)
+    clearTimeout(connectionTimeout)
+    connectionPending = false
+    gameSubscriptions = []
+    const previousSocket = sock
+    sock = undefined
+    stompClient = undefined
+    if (previousSocket) previousSocket.close()
+}
+
+function unavailableLobby(message) {
+    desiredConnection = null
+    stopConnection()
+    activeGameId = undefined
+    amCreator = false
+    currentRound = 0
+    currentResults = {}
+    closeAvatarEditor()
+    closeGameResults()
+    closeSettings()
+    $('#result-screen').hide()
+    window.history.replaceState({}, '', '/')
+    setConnectionStatus()
+    renderAuthAndCreateConnectScreen()
+    showErrorMessage(message)
+}
+
 function connectAndSend(message) {
-    let cookies = parseCookie()
-    let name = cookies['no-thanks-name']
+    const name = parseCookie()['no-thanks-name']
     if (isBlank(name)) {
-        showErrorMessage("Name cannot be blank")
+        showErrorMessage('Name cannot be blank')
         return
     }
-    message.name = name
-    if (sock !== undefined && stompClient !== undefined && !stompClient.connected) {
-        sock = new SockJS("/no-thanks");
-        stompClient = Stomp.over(sock);
+    desiredConnection = {...message, name, avatar: savedAvatar()}
+    if (connectionPending) return
+    if (stompClient && stompClient.connected) {
+        connectionPending = true
+        setConnectionStatus('Connecting to lobby...')
+        connectionTimeout = setTimeout(() => {
+            stopConnection()
+            openConnection()
+        }, 3000)
+        stompClient.send('/app/lobby/input/connect', {}, JSON.stringify(desiredConnection))
+        return
     }
-    if (sock === undefined) {
-        sock = new SockJS("/no-thanks");
-    }
-    if (stompClient === undefined) {
-        stompClient = Stomp.over(sock);
-    }
-    if (stompClient.connected) {
-        stompClient.send('/app/lobby/input/connect', {}, JSON.stringify(message))
-    } else {
-        stompClient.connect({}, () => {
-            stompClient.subscribe('/players/lobby/info', payload => {
-                processDirectInfoMessage(JSON.parse(payload.body))
-            });
-            stompClient.send('/app/lobby/input/connect', {}, JSON.stringify(message))
-        }, function(message) {
-            if (message.startsWith("Whoops! Lost connection to")) {
-                renderAuthAndCreateConnectScreen()
-                showErrorMessage("You have been disconnected")
-            }
-        });
-    }
+    openConnection()
 }
+
+function openConnection() {
+    if (!desiredConnection || connectionPending || document.hidden) return
+    stopConnection()
+    connectionPending = true
+    desiredConnection = {...desiredConnection, name: parseCookie()['no-thanks-name'], avatar: savedAvatar()}
+    const generation = connectionGeneration
+    const socket = new SockJS('/no-thanks')
+    const client = Stomp.over(socket)
+    sock = socket
+    stompClient = client
+    setConnectionStatus(activeGameId ? 'Reconnecting to your game...' : 'Connecting to lobby...')
+    const retry = () => {
+        if (generation !== connectionGeneration) return
+        stopConnection()
+        closeAvatarEditor()
+        setConnectionStatus('Connection lost. Reconnecting...')
+        reconnectTimer = setTimeout(openConnection, 2000)
+    }
+    connectionTimeout = setTimeout(retry, 10000)
+    client.connect({}, () => {
+        if (generation !== connectionGeneration) return
+        client.subscribe('/players/lobby/info', payload => {
+            if (generation === connectionGeneration) processDirectInfoMessage(JSON.parse(payload.body))
+        })
+        client.send('/app/lobby/input/connect', {}, JSON.stringify(desiredConnection))
+    }, retry)
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        backgroundedAt = Date.now()
+        return
+    }
+    if (desiredConnection && backgroundedAt !== null && Date.now() - backgroundedAt > 1000) {
+        // Refresh state first; replace a stale socket if it cannot return a snapshot.
+        connectAndSend(desiredConnection)
+    } else if (desiredConnection && (!stompClient || !stompClient.connected)) {
+        openConnection()
+    }
+    backgroundedAt = null
+})
+window.addEventListener('online', () => {
+    if (desiredConnection && (!stompClient || !stompClient.connected)) openConnection()
+})
 
 function createGame() {
     connectAndSend({createGame: true})
@@ -77,6 +158,21 @@ function connectGame(inviteCode = undefined) {
 }
 
 function processTopicMessage(message) {
+    if (message.type === 'LobbyClosedMessage') {
+        unavailableLobby('The lobby closed because the host did not reconnect in time.')
+        return
+    }
+    if (message.type === 'PlayerAvatarChangedMessage') {
+        updateAvatar(message.playerNumber, message.avatar)
+        if (message.playerNumber === myNumber) {
+            rememberAvatar(message.avatar)
+            closeAvatarEditor()
+        }
+    }
+    if (message['type'] === 'ParamsChangedMessage') {
+        currentParams = message.newParams
+        closeSettings()
+    }
     if (message['type'] === "LobbyConnectedMessage") {
         addPlayerToLobbyList(message['newPlayer'])
         updatePlayerCountInLobby(message['allPlayers'].length)
@@ -102,7 +198,7 @@ function processTopicMessage(message) {
         }
         updateRemainingNumberCards(message['remainingNumberCards'])
         currentCardCoinsBlock.html('0')
-        currentCardBlock.html(message['newCardNumber'])
+        renderCurrentCard(message['newCardNumber'])
     }
     if (message['type'] === "PutCoinMessage") {
         currentCardCoinsBlock.html(message['currentCardCoins'])
@@ -128,6 +224,10 @@ function processTopicMessage(message) {
 
 function processDirectMessage(message) {
     if (message['type'] === "ErrorMessage") {
+        if (avatarEditor[0].open) {
+            avatarError(message.message)
+            return
+        }
         showErrorMessage(message['message']);
     }
     if (message['type'] === "PlayerPersonalInfoMessage") {
@@ -140,18 +240,30 @@ function processDirectMessage(message) {
 }
 
 function processDirectInfoMessage(message) {
+    if (message.type === 'ErrorMessage') {
+        unavailableLobby(message.message)
+        return
+    }
     if (message['type'] === "UserConnectedMessage") {
-        window.history.pushState({},"", message['inviteCode']);
+        clearTimeout(connectionTimeout)
+        clearTimeout(reconnectTimer)
+        connectionPending = false
+        desiredConnection = {inviteCode: message.inviteCode, name: parseCookie()['no-thanks-name'], avatar: savedAvatar()}
+        gameSubscriptions.forEach(subscription => subscription.unsubscribe())
+        gameSubscriptions = []
+        window.history.replaceState({}, '', message.inviteCode)
         myNumber = message['playerNumber']
         activeGameId = message['gameId']
         amCreator = message['isCreator']
         updateRoundAndResults(message['round'], message['result'])
-        stompClient.subscribe('/players/lobby/' + activeGameId + '/player', payload => {
+        gameSubscriptions.push(stompClient.subscribe('/players/lobby/' + activeGameId + '/player', payload => {
             processDirectMessage(JSON.parse(payload.body))
-        });
-        stompClient.subscribe("/lobby/" + activeGameId, payload => {
+        }))
+        gameSubscriptions.push(stompClient.subscribe('/lobby/' + activeGameId, payload => {
             processTopicMessage(JSON.parse(payload.body))
-        });
+        }))
+        setConnectionStatus()
+        $('#result-screen').hide()
         renderLobbyScreen(message['isCreator'], message['players'], message['inviteCode'], message['params'])
         if (message['isStarted'] === true) {
             let game = message['gameStatus']
@@ -162,6 +274,64 @@ function processDirectInfoMessage(message) {
 
 function startGame() {
     stompClient.send('/app/lobby/input/' + activeGameId + '/round', {}, JSON.stringify({wantToStart: true}))
+}
+
+function openSettings() {
+    if (!amCreator || !lobbyScreen.is(':visible')) return
+    settingsMinCardInput.val(currentParams.minCard)
+    settingsMaxCardInput.val(currentParams.maxCard)
+    settingsRemovedCardsInput.val(currentParams.removedCards)
+    settingsDefaultTokensInput.prop('checked', currentParams.useDefaultTokens)
+    settingsTokensInput.val(currentParams.useDefaultTokens ? '' : currentParams.initialCoinsCount)
+        .prop('required', !currentParams.useDefaultTokens)
+    updateSettingsCardRange()
+    settingsMenu.show()
+    settingsMinCardInput.trigger('focus')
+}
+
+function closeSettings() {
+    settingsMenu.hide()
+}
+
+function updateSettingsCardRange() {
+    const maxCard = Number(settingsMaxCardInput.val())
+    const minCard = Number(settingsMinCardInput.val())
+    settingsMinCardInput.attr('max', maxCard)
+    const count = maxCard - minCard + 1
+    settingsRemovedCardsInput.attr('max', Math.max(0, count - 1))
+    settingsCardRange.text(`Cards ${minCard}–${maxCard} (${count} cards before removal).`)
+}
+
+settingsMinCardInput.add(settingsMaxCardInput).on('input', updateSettingsCardRange)
+
+settingsTokensInput.on('input', function () {
+    settingsDefaultTokensInput.prop('checked', false)
+    $(this).prop('required', true)
+})
+
+function toggleDefaultTokens() {
+    const automatic = settingsDefaultTokensInput.prop('checked')
+    settingsTokensInput.prop('required', !automatic)
+    if (automatic) settingsTokensInput.val('')
+}
+
+function resetSettings() {
+    if (!amCreator || !lobbyScreen.is(':visible')) return
+    stompClient.send('/app/lobby/input/' + activeGameId + '/round', {},
+        JSON.stringify({newParams: {resetToDefaults: true}}))
+}
+
+function saveSettings() {
+    if (!amCreator || !lobbyScreen.is(':visible')) return
+    updateSettingsCardRange()
+    if (!settingsMenu[0].reportValidity()) return
+    stompClient.send('/app/lobby/input/' + activeGameId + '/round', {}, JSON.stringify({newParams: {
+        minCard: Number(settingsMinCardInput.val()),
+        maxCard: Number(settingsMaxCardInput.val()),
+        removedCards: Number(settingsRemovedCardsInput.val()),
+        useDefaultTokens: settingsDefaultTokensInput.prop('checked'),
+        defaultCoinsCount: settingsDefaultTokensInput.prop('checked') ? null : Number(settingsTokensInput.val())
+    }}))
 }
 
 function resetScore() {

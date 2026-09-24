@@ -35,10 +35,11 @@ let rules =
         'To score the fewest points; players score points each time they collect a number and subtract points for each counter they hold at the end of the game.<br>' +
         '<h3 style="margin-bottom: 0.2em; margin-top: 0.2em">Game proccess</h3> ' +
         'Players make turns one after another. There is a common stack of numbers in front of players with a top number revealed. ' +
-        'The stack consists of 33 consecutive numbers from 3 to 35, <b>with nine random numbers removed each round. </b><br>' +
+        'By default, the stack contains cards from 3 to 35, <b>with nine random cards removed each round.</b> ' +
+        'The host can change the card range, removed card count, and initial tokens in the lobby Settings menu.<br>' +
         'During turn, a number is presented to a player. ' +
         'The player has two options:<br>' +
-        '<b>1)</b> Take the number by pressing the <b>"Take number"</b> button. In this case, the player is scored these penalty points. ' +
+        '<b>1)</b> Take the card by pressing the <b>"Take Card"</b> button. In this case, the player is scored these penalty points. ' +
         'The number remains in player`s possesion until the end of the round and is public. Any counters collected on the number are also received. ' +
         'After taking the number, the next number in the stack is revealed and the player must make the same choice. <br>' +
         '<b>2)</b> Say <b>"No Thanks!"</b> so you don`t have to take the number by pressing the corresponding button. ' +
@@ -102,6 +103,9 @@ function renderAuthAndCreateConnectScreen() {
 }
 
 function renderLobbyScreen(isCreator, players, lobbyInviteCode, params) {
+    currentParams = params
+    closeSettings()
+    $('#settings-button').toggle(isCreator)
     $('#invite-code').html(lobbyInviteCode)
     lobbyScreen.show()
     createAndConnectScreen.hide()
@@ -122,14 +126,17 @@ function renderLobbyScreen(isCreator, players, lobbyInviteCode, params) {
 }
 
 function addPlayerToLobbyList(player) {
+    $(`#lobby-player-li-${player.number}`).remove()
     let playerClass = player.number === myNumber ? "players-li current-player" : "players-li"
     let clickable = player.number === myNumber ? "onclick=\"renderChangeNameBlock(); return false;\"" : ""
     let playerNameClass = player.number === myNumber ? "nickname editable-player-name" : "nickname"
     lobbyPlayersList.append($(
         `<li class="${playerClass}" id="lobby-player-li-${player.number}">
-            <div class="player-ava-block"></div>
+            <span class="avatar-slot"></span>
             <span id="lobby-player-li-span-${player.number}" ${clickable} class="${playerNameClass}">${player.name}</span>
         </li>`))
+    $(`#lobby-player-li-${player.number} .avatar-slot`).replaceWith(renderAvatar(player))
+    if (player.disconnected) playerDisconnected(player)
 }
 function renderChangeNameBlock() {
     $('body').append(changeNameBlock);
@@ -156,6 +163,7 @@ function playerDisconnected(player) {
 }
 
 function playerReconnected(player) {
+    updateAvatar(player.number, player.avatar)
     $(`#lobby-player-li-${player.number}`).removeClass('disconnected-lobby-player')
     $(`#other-player-block-${player.number}`).removeClass('disconnected-game-player')
 }
@@ -176,6 +184,7 @@ function renderCreateAndConnectScreen(name) {
 }
 
 function renderGameScreen(playersList, currentCard, activePlayerNumber, remainingNumberCard, currentCardCoin = 0) {
+    closeSettings()
     createAndConnectScreen.hide()
     authScreen.hide()
     lobbyScreen.hide()
@@ -189,7 +198,7 @@ function renderGameScreen(playersList, currentCard, activePlayerNumber, remainin
     let index = playersList.findIndex(player => player.number === myNumber)
     let rightPlyerList = playersList.slice(index).concat(playersList.slice(0, index))
     rightPlyerList.forEach(player => renderSingleGamePlayer(player, activePlayerNumber))
-    currentCardBlock.html(currentCard)
+    renderCurrentCard(currentCard)
     currentCardCoinsBlock.html(currentCardCoin)
     renderPlayButtons(activePlayerNumber === myNumber)
     updateRemainingNumberCards(remainingNumberCard)
@@ -206,8 +215,23 @@ function renderPlayButtons(isCurrent, enoughCoins) {
     }
 }
 
+function renderCurrentCard(number) {
+    currentCardBlock.empty().attr('aria-label', `Card ${number}`)
+    const fallback = $('<span class="current-card-fallback">').text(number)
+    currentCardBlock.append(fallback)
+    // Custom decks may include 1 or 2, for which there is no artwork.
+    if (number < 3 || number > 55) return
+    const artwork = $('<img class="current-card-artwork" alt="Current card">')
+        .attr({alt: `Card ${number}`, width: 244, height: 366})
+        .on('load', () => fallback.hide())
+        .on('error', function () { $(this).remove(); fallback.show() })
+    artwork.attr('src', `img/cards/${number}.png`)
+    currentCardBlock.append(artwork)
+}
+
 function renderSingleGamePlayer(player, activePlayerNumber) {
     if (player.number === myNumber) {
+        $('#own-avatar').empty().append(renderAvatar(player))
         currentPlayerName.text(player.name)
         updatePersonalInfo(player.coins, player.cards, activePlayerNumber === myNumber)
     } else {
@@ -217,7 +241,7 @@ function renderSingleGamePlayer(player, activePlayerNumber) {
         let otherPlayerDiv = $(
             `<div class="${otherPlayerClass}" id="${otherPlayerBlockId}">
                 <div class="nickname-player-card-block">
-                    <div class="player-ava-block"></div>
+                    <span class="avatar-slot"></span>
                     <span class="nickname" id="game-player-name-${player.number}">${player.name}</span>
                 </div>
                 <div class="status-player-card-block">
@@ -227,6 +251,8 @@ function renderSingleGamePlayer(player, activePlayerNumber) {
                 </div>
             </div>`)
         gamePlayersList.append(otherPlayerDiv)
+        otherPlayerDiv.find('.avatar-slot').replaceWith(renderAvatar(player))
+        if (player.disconnected) playerDisconnected(player)
     }
 }
 
@@ -315,7 +341,7 @@ function updateRoundDisplay() {
     $('#lobby-round-number').text(currentRound + 1)
     $('#game-round-number').text(Math.max(currentRound, 1))
     $('#result-round-number').text(Math.max(currentRound, 1))
-    $('#start-game-button').text(currentRound === 0 ? 'Start Game' : 'Start Next Round')
+    startGameButton.text(currentRound === 0 ? 'Start Game' : 'Start Next Round')
     resetScoreButton.prop('disabled', !hasCompletedRounds(currentResults))
     renderResultsTable($('#lobby-results-table'), currentResults)
 }
@@ -408,8 +434,23 @@ function getColor(number) {
     if (number < 3) {
         number = 3
     }
-    if (number > 35) {
-        number = 35
+    if (number > 20) {
+        // Ease through yellow and light reddish brown before the dark reference color.
+        const stops = [
+            [20, [0, 255, 0]],
+            [25, [255, 235, 80]],
+            [30, [205, 125, 95]],
+            [35, [100, 24, 20]],
+            [55, [60, 30, 12]]
+        ]
+        number = Math.min(number, 55)
+        const endIndex = stops.findIndex(([value]) => value >= number)
+        const [startValue, start] = stops[endIndex - 1]
+        const [endValue, end] = stops[endIndex]
+        const progress = (number - startValue) / (endValue - startValue)
+        const [red, green, blue] = start.map((channel, index) =>
+            Math.round(channel + (end[index] - channel) * progress))
+        return `rgb(${red},${green},${blue})`
     }
     let dif = (number - 3) * 15
     let blue = 255 - Math.min(dif, 255)
