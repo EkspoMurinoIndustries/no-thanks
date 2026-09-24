@@ -12,6 +12,18 @@
 .settings-help { margin: 12px 0 16px; font-size: 14px; line-height: 1.5; }
 #settings-menu input:focus-visible { outline: 2px solid white; outline-offset: 3px; }
 
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
 * {
     padding: 0;
     margin: 0;
@@ -190,7 +202,40 @@ textarea:focus, input:focus {
     background-color: #e3e2ff;
     border-radius: 50%;
     margin: 5px;
+    overflow: hidden;
+    flex-shrink: 0;
 }
+
+.player-ava-block img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.editable-avatar { cursor: pointer; }
+.editable-avatar:hover { box-shadow: 0 0 0 2px white; }
+.editable-avatar:focus-visible { outline: 3px solid white; outline-offset: 2px; }
+#avatar-editor {
+    margin: auto;
+    padding: 24px;
+    width: min(340px, calc(100vw - 64px));
+    max-height: calc(100dvh - 64px);
+    overflow-y: auto;
+    background: linear-gradient(155deg, #765ddd, #5790fb);
+    border: 2px solid #c5c3f9;
+    border-radius: 20px;
+}
+#avatar-editor::backdrop { background: rgba(20, 15, 60, 0.65); }
+#avatar-editor h2, #avatar-editor p { margin-bottom: 12px; }
+#avatar-preview {
+    display: block;
+    width: min(256px, 100%);
+    height: auto;
+    margin: 16px auto;
+    border-radius: 50%;
+    outline: 2px solid white;
+    touch-action: none;
+    cursor: grab;
+}
+#avatar-preview:active { cursor: grabbing; }
+#avatar-editor label { display: block; }
+#avatar-editor input[type="range"] { display: block; width: 100%; margin: 8px 0 14px; }
+#avatar-error { font-weight: bold; }
 
 .nickname {
     line-height: 59px;
@@ -348,9 +393,7 @@ textarea:focus, input:focus {
 }
 
 .error-message {
-    display: -ms-flexbox;
     display: flex;
-    -ms-flex-align: center;
     align-items: center;
     position: fixed;
     top: 0;
@@ -387,7 +430,6 @@ textarea:focus, input:focus {
 .error-message-box {
     position: relative;
     -webkit-transition: all .25s;
-    -o-transition: all .25s;
     transition: all .25s;
     background: #fff;
     max-width: 100%;
@@ -410,7 +452,6 @@ textarea:focus, input:focus {
 .changename-message-box {
     position: relative;
     -webkit-transition: all .25s;
-    -o-transition: all .25s;
     transition: all .25s;
     background: #fff;
     max-width: 100%;

@@ -6,5 +6,6 @@ data class LobbyPlayer(
     val id: UUID,
     val number: Int,
     var name: String,
-    val score: MutableList<Int> = mutableListOf()
+    val score: MutableList<Int> = mutableListOf(),
+    var avatar: String? = null
 )

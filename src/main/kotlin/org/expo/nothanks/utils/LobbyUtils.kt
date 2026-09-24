@@ -79,7 +79,8 @@ fun Lobby.getSafeLobbyPlayers(): List<SafeLobbyPlayer> {
         SafeLobbyPlayer(
             number = it.number,
             name = it.name,
-            score = it.score
+            score = it.score,
+            avatar = it.avatar
         )
     }
 }
@@ -110,16 +111,17 @@ fun Lobby.getGame(): Game {
 
 fun Lobby.getPlayersInGame(): List<SafeGamePlayer> {
     return getGame().playerSequence().map {
-        it.toSafeGamePlayer(players[it.id]!!.name)
+        it.toSafeGamePlayer(players[it.id]!!.name, players[it.id]!!.avatar)
     }.toList()
 }
 
-fun Player.toSafeGamePlayer(name: String): SafeGamePlayer {
+fun Player.toSafeGamePlayer(name: String, avatar: String? = null): SafeGamePlayer {
     return SafeGamePlayer(
         name = name,
         number = this.number,
         cards = this.cards,
-        coins = this.coins
+        coins = this.coins,
+        avatar = avatar
     )
 }
 
@@ -128,7 +130,8 @@ fun Lobby.getPlayerInLobby(playerId: UUID): SafeLobbyPlayer {
         SafeLobbyPlayer(
             name = it.name,
             number = it.number,
-            score = it.score
+            score = it.score,
+            avatar = it.avatar
         )
     } ?: throw PlayerException("Player has not been found", gameId, playerId)
 }
@@ -138,7 +141,8 @@ fun Lobby.getPlayersInLobby(): List<SafeLobbyPlayer> {
         SafeLobbyPlayer(
             name = it.name,
             number = it.number,
-            score = it.score
+            score = it.score,
+            avatar = it.avatar
         )
     }.toList()
 }

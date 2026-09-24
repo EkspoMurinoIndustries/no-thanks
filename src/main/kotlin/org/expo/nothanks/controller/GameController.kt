@@ -4,6 +4,7 @@ package org.expo.nothanks.controller
 import mu.KLogging
 import org.expo.nothanks.exception.NoThanksException
 import org.expo.nothanks.model.event.input.ChangeNameMessage
+import org.expo.nothanks.model.event.input.ChangeAvatarMessage
 import org.expo.nothanks.model.event.output.UserConnectedMessage
 import org.expo.nothanks.model.event.input.ConnectToGameMessage
 import org.expo.nothanks.model.event.input.GameChangingMessage
@@ -31,6 +32,7 @@ class GameController(
     fun gameManager(@Payload message: ConnectToGameMessage, principal: Principal): Any {
         val token = principal.getPlayerId()
         val playerName = message.name.validatedPlayerName()
+        val avatar = message.avatar.validatedAvatar()
         val gameId = if (message.createGame) {
             gamesService.createLobby(token).gameId
         } else {
@@ -38,6 +40,7 @@ class GameController(
         }
         lateinit var response: UserConnectedMessage
         gamesService.addPlayerToLobby(gameId, token, playerName) { lobby, newPlayer ->
+            lobby.getPlayer(token).avatar = avatar
             if (newPlayer) {
                 notificationService.lobbyConnection(lobby, token)
             } else {
@@ -132,6 +135,21 @@ class GameController(
             }
         } catch (e: NoThanksException) {
             logger.error("changeName error", e)
+            notificationService.sendErrorToUser(gameId, playerId, e.publicMessage)
+        }
+    }
+
+    @MessageMapping("/lobby/input/avatar")
+    fun avatar(@Payload message: ChangeAvatarMessage, principal: Principal) {
+        val playerId = principal.getPlayerId()
+        val gameId = gamesService.gameIdByPlayerId(playerId)
+        try {
+            val avatar = message.avatar.validatedAvatar()
+            gamesService.changeGameWithLock(gameId) { lobby ->
+                lobby.getPlayer(playerId).avatar = avatar
+                notificationService.updateAvatar(lobby, playerId, avatar)
+            }
+        } catch (e: NoThanksException) {
             notificationService.sendErrorToUser(gameId, playerId, e.publicMessage)
         }
     }

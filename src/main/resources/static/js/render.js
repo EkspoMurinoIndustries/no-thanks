@@ -131,9 +131,10 @@ function addPlayerToLobbyList(player) {
     let playerNameClass = player.number === myNumber ? "nickname editable-player-name" : "nickname"
     lobbyPlayersList.append($(
         `<li class="${playerClass}" id="lobby-player-li-${player.number}">
-            <div class="player-ava-block"></div>
+            <span class="avatar-slot"></span>
             <span id="lobby-player-li-span-${player.number}" ${clickable} class="${playerNameClass}">${player.name}</span>
         </li>`))
+    $(`#lobby-player-li-${player.number} .avatar-slot`).replaceWith(renderAvatar(player))
 }
 function renderChangeNameBlock() {
     $('body').append(changeNameBlock);
@@ -160,6 +161,7 @@ function playerDisconnected(player) {
 }
 
 function playerReconnected(player) {
+    updateAvatar(player.number, player.avatar)
     $(`#lobby-player-li-${player.number}`).removeClass('disconnected-lobby-player')
     $(`#other-player-block-${player.number}`).removeClass('disconnected-game-player')
 }
@@ -217,7 +219,7 @@ function renderCurrentCard(number) {
     currentCardBlock.append(fallback)
     // Custom decks may include 1 or 2, for which there is no artwork.
     if (number < 3 || number > 55) return
-    const artwork = $('<img class="current-card-artwork">')
+    const artwork = $('<img class="current-card-artwork" alt="Current card">')
         .attr({alt: `Card ${number}`, width: 244, height: 366})
         .on('load', () => fallback.hide())
         .on('error', function () { $(this).remove(); fallback.show() })
@@ -227,6 +229,7 @@ function renderCurrentCard(number) {
 
 function renderSingleGamePlayer(player, activePlayerNumber) {
     if (player.number === myNumber) {
+        $('#own-avatar').empty().append(renderAvatar(player))
         currentPlayerName.text(player.name)
         updatePersonalInfo(player.coins, player.cards, activePlayerNumber === myNumber)
     } else {
@@ -236,7 +239,7 @@ function renderSingleGamePlayer(player, activePlayerNumber) {
         let otherPlayerDiv = $(
             `<div class="${otherPlayerClass}" id="${otherPlayerBlockId}">
                 <div class="nickname-player-card-block">
-                    <div class="player-ava-block"></div>
+                    <span class="avatar-slot"></span>
                     <span class="nickname" id="game-player-name-${player.number}">${player.name}</span>
                 </div>
                 <div class="status-player-card-block">
@@ -246,6 +249,7 @@ function renderSingleGamePlayer(player, activePlayerNumber) {
                 </div>
             </div>`)
         gamePlayersList.append(otherPlayerDiv)
+        otherPlayerDiv.find('.avatar-slot').replaceWith(renderAvatar(player))
     }
 }
 
@@ -334,7 +338,7 @@ function updateRoundDisplay() {
     $('#lobby-round-number').text(currentRound + 1)
     $('#game-round-number').text(Math.max(currentRound, 1))
     $('#result-round-number').text(Math.max(currentRound, 1))
-    $('#start-game-button').text(currentRound === 0 ? 'Start Game' : 'Start Next Round')
+    startGameButton.text(currentRound === 0 ? 'Start Game' : 'Start Next Round')
     resetScoreButton.prop('disabled', !hasCompletedRounds(currentResults))
     renderResultsTable($('#lobby-results-table'), currentResults)
 }

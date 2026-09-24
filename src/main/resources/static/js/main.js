@@ -1,3 +1,11 @@
+const settingsMinCardInput = $('#settings-min-card')
+const settingsMaxCardInput = $('#settings-max-card')
+const settingsRemovedCardsInput = $('#settings-removed-cards')
+const settingsDefaultTokensInput = $('#settings-default-tokens')
+const settingsTokensInput = $('#settings-tokens')
+const settingsMenu = $('#settings-menu')
+const settingsCardRange = $('#settings-card-range')
+
 let contentTypeHeader = {'Content-Type': 'application/json; charset=UTF-8'}
 
 let sock
@@ -39,6 +47,7 @@ function connectAndSend(message) {
         return
     }
     message.name = name
+    message.avatar = savedAvatar()
     if (sock !== undefined && stompClient !== undefined && !stompClient.connected) {
         sock = new SockJS("/no-thanks");
         stompClient = Stomp.over(sock);
@@ -78,6 +87,13 @@ function connectGame(inviteCode = undefined) {
 }
 
 function processTopicMessage(message) {
+    if (message.type === 'PlayerAvatarChangedMessage') {
+        updateAvatar(message.playerNumber, message.avatar)
+        if (message.playerNumber === myNumber) {
+            rememberAvatar(message.avatar)
+            closeAvatarEditor()
+        }
+    }
     if (message['type'] === 'ParamsChangedMessage') {
         currentParams = message.newParams
         closeSettings()
@@ -133,6 +149,10 @@ function processTopicMessage(message) {
 
 function processDirectMessage(message) {
     if (message['type'] === "ErrorMessage") {
+        if (avatarEditor[0].open) {
+            avatarError(message.message)
+            return
+        }
         showErrorMessage(message['message']);
     }
     if (message['type'] === "PlayerPersonalInfoMessage") {
@@ -171,41 +191,41 @@ function startGame() {
 
 function openSettings() {
     if (!amCreator || !lobbyScreen.is(':visible')) return
-    $('#settings-min-card').val(currentParams.minCard)
-    $('#settings-max-card').val(currentParams.maxCard)
-    $('#settings-removed-cards').val(currentParams.removedCards)
-    $('#settings-default-tokens').prop('checked', currentParams.useDefaultTokens)
-    $('#settings-tokens').val(currentParams.useDefaultTokens ? '' : currentParams.initialCoinsCount)
+    settingsMinCardInput.val(currentParams.minCard)
+    settingsMaxCardInput.val(currentParams.maxCard)
+    settingsRemovedCardsInput.val(currentParams.removedCards)
+    settingsDefaultTokensInput.prop('checked', currentParams.useDefaultTokens)
+    settingsTokensInput.val(currentParams.useDefaultTokens ? '' : currentParams.initialCoinsCount)
         .prop('required', !currentParams.useDefaultTokens)
     updateSettingsCardRange()
-    $('#settings-menu').show()
-    $('#settings-min-card').trigger('focus')
+    settingsMenu.show()
+    settingsMinCardInput.trigger('focus')
 }
 
 function closeSettings() {
-    $('#settings-menu').hide()
+    settingsMenu.hide()
 }
 
 function updateSettingsCardRange() {
-    const maxCard = Number($('#settings-max-card').val())
-    const minCard = Number($('#settings-min-card').val())
-    $('#settings-min-card').attr('max', maxCard)
+    const maxCard = Number(settingsMaxCardInput.val())
+    const minCard = Number(settingsMinCardInput.val())
+    settingsMinCardInput.attr('max', maxCard)
     const count = maxCard - minCard + 1
-    $('#settings-removed-cards').attr('max', Math.max(0, count - 1))
-    $('#settings-card-range').text(`Cards ${minCard}–${maxCard} (${count} cards before removal).`)
+    settingsRemovedCardsInput.attr('max', Math.max(0, count - 1))
+    settingsCardRange.text(`Cards ${minCard}–${maxCard} (${count} cards before removal).`)
 }
 
-$('#settings-min-card, #settings-max-card').on('input', updateSettingsCardRange)
+settingsMinCardInput.add(settingsMaxCardInput).on('input', updateSettingsCardRange)
 
-$('#settings-tokens').on('input', function () {
-    $('#settings-default-tokens').prop('checked', false)
+settingsTokensInput.on('input', function () {
+    settingsDefaultTokensInput.prop('checked', false)
     $(this).prop('required', true)
 })
 
 function toggleDefaultTokens() {
-    const automatic = $('#settings-default-tokens').prop('checked')
-    $('#settings-tokens').prop('required', !automatic)
-    if (automatic) $('#settings-tokens').val('')
+    const automatic = settingsDefaultTokensInput.prop('checked')
+    settingsTokensInput.prop('required', !automatic)
+    if (automatic) settingsTokensInput.val('')
 }
 
 function resetSettings() {
@@ -217,13 +237,13 @@ function resetSettings() {
 function saveSettings() {
     if (!amCreator || !lobbyScreen.is(':visible')) return
     updateSettingsCardRange()
-    if (!$('#settings-menu')[0].reportValidity()) return
+    if (!settingsMenu[0].reportValidity()) return
     stompClient.send('/app/lobby/input/' + activeGameId + '/round', {}, JSON.stringify({newParams: {
-        minCard: Number($('#settings-min-card').val()),
-        maxCard: Number($('#settings-max-card').val()),
-        removedCards: Number($('#settings-removed-cards').val()),
-        useDefaultTokens: $('#settings-default-tokens').prop('checked'),
-        defaultCoinsCount: $('#settings-default-tokens').prop('checked') ? null : Number($('#settings-tokens').val())
+        minCard: Number(settingsMinCardInput.val()),
+        maxCard: Number(settingsMaxCardInput.val()),
+        removedCards: Number(settingsRemovedCardsInput.val()),
+        useDefaultTokens: settingsDefaultTokensInput.prop('checked'),
+        defaultCoinsCount: settingsDefaultTokensInput.prop('checked') ? null : Number(settingsTokensInput.val())
     }}))
 }
 

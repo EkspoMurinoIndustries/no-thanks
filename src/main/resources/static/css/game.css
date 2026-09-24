@@ -74,7 +74,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 27px;
+    height: 44px;
     padding: 0 12px;
     border-bottom: 1px solid rgba(197, 195, 249, 0.65);
     box-sizing: border-box;
@@ -100,6 +100,9 @@
 .own-player-status-block {
     min-height: 60px;
 }
+
+#own-avatar { display: inline-flex; flex-shrink: 0; }
+#own-avatar .player-ava-block { width: 32px; height: 32px; margin: 0; float: none; }
 
 .own-player-status-block,
 .status-player-card-block {
