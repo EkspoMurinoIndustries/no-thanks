@@ -18,7 +18,7 @@ import javax.imageio.ImageIO
 internal class AvatarControllerTest {
     @Test
     fun `only the sending player changes and avatar is included in lobby and round snapshots`() {
-        val games = GamesService(DefaultGameProperties(3, 35, 9, 2, 8, (2..8).associateWith { 11 }))
+        val games = GamesService(DefaultGameProperties(3, 35, 9, 2, 8, (2..8).associateWith { 11 }), 300000)
         val notifications = mock(NotificationService::class.java)
         val controller = GameController(games, notifications)
         val host = UUID.randomUUID()

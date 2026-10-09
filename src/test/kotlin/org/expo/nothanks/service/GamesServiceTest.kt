@@ -24,7 +24,7 @@ internal class GamesServiceTest {
 
     @Test
     fun `settings are host only validated atomically and persist across rounds`() {
-        val service = GamesService(defaultGameProperties())
+        val service = GamesService(defaultGameProperties(), 300000)
         val host = UUID.randomUUID()
         val guest = UUID.randomUUID()
         val lobby = service.createLobby(host)
@@ -64,7 +64,7 @@ internal class GamesServiceTest {
 
     @Test
     fun `automatic tokens follow player count and reset clears manual overrides`() {
-        val service = GamesService(defaultGameProperties())
+        val service = GamesService(defaultGameProperties(), 300000)
         val host = UUID.randomUUID()
         val lobby = service.createLobby(host)
         service.addPlayerToLobby(lobby.gameId, host, "Host") { _, _ -> }
@@ -105,7 +105,7 @@ internal class GamesServiceTest {
 
     @Test
     fun `only the host can abort an active round`() {
-        val gamesService = GamesService(defaultGameProperties())
+        val gamesService = GamesService(defaultGameProperties(), 300000)
         val hostId = UUID.randomUUID()
         val guestId = UUID.randomUUID()
         val lobby = gamesService.createLobby(hostId)

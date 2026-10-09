@@ -43,10 +43,6 @@ fun Lobby.addPlayer(playerId: UUID, name: String): Boolean {
     return false
 }
 
-fun Lobby.setNotActive() {
-    active = false
-}
-
 fun Lobby.gameStatusOrNull(playerId: UUID): GameStatus? {
     return if (isGameStarted()) {
         val game = getGame()

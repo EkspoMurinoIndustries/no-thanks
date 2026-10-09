@@ -7,9 +7,10 @@ import org.springframework.stereotype.Component
 class LobbyCleanup(private val games: GamesService, private val notifications: NotificationService) {
     @Scheduled(fixedDelay = 5000)
     fun expireDisconnectedPlayers() {
-        games.expireDisconnectedPlayers(
-            onClosed = notifications::lobbyClosed,
-            onPlayerLeft = notifications::playerLeft
-        )
+        val now = System.currentTimeMillis()
+        games.removeExpiredLobbies(now).forEach(notifications::lobbyClosed)
+        games.removeExpiredPlayers(now).forEach { (gameId, message) ->
+            notifications.playerLeft(gameId, message)
+        }
     }
 }

@@ -31,7 +31,8 @@ internal class LobbyReconnectTest {
             games.addPlayerToLobby(lobby.gameId, player, "Ignored", "$session-new") { _, newPlayer -> assertFalse(newPlayer) }
             assertFalse(lobby.canBeReconnected(player))
         }
-        games.expireDisconnectedPlayers(System.currentTimeMillis() + 2000, { fail("Reconnected lobby expired") }, { _, _ -> fail("Player expired") })
+        assertTrue(games.removeExpiredLobbies(Long.MAX_VALUE).isEmpty())
+        assertTrue(games.removeExpiredPlayers(Long.MAX_VALUE).isEmpty())
         assertEquals(55, lobby.params.maxCard)
         assertEquals("saved avatar", lobby.players[host]!!.avatar)
     }
@@ -67,22 +68,50 @@ internal class LobbyReconnectTest {
     fun `host expiry closes lobby once and safely ignores later guest disconnects`() {
         var closures = 0
         games.disconnectPlayerFromLobby(host, "host-1") { _, _ -> }
-        games.expireDisconnectedPlayers(System.currentTimeMillis() + 2000, { closures++ }, { _, _ -> })
-        assertFalse(lobby.active)
+        closures += games.removeExpiredLobbies(System.currentTimeMillis() + 2000).size
         assertEquals(1, closures)
         assertThrows(InviteHasNotBeenFound::class.java) { games.gameIdByInviteCode(lobby.inviteCode) }
         games.disconnectPlayerFromLobby(guest, "guest-1") { _, _ -> fail("Deleted lobby must be ignored") }
-        games.expireDisconnectedPlayers(Long.MAX_VALUE, { closures++ }, { _, _ -> })
+        closures += games.removeExpiredLobbies(Long.MAX_VALUE).size
         assertEquals(1, closures)
     }
 
     @Test
     fun `guest expiry frees a pregame seat without closing the lobby`() {
         games.disconnectPlayerFromLobby(guest, "guest-1") { _, _ -> }
-        var departures = 0
-        games.expireDisconnectedPlayers(System.currentTimeMillis() + 2000, { fail("Guest must not close lobby") }, { _, _ -> departures++ })
+        assertTrue(games.removeExpiredLobbies(Long.MAX_VALUE).isEmpty())
+        val departures = games.removeExpiredPlayers(Long.MAX_VALUE).size
         assertEquals(1, departures)
         assertEquals(1, lobby.players.size)
         assertEquals(lobby.gameId, games.gameIdByInviteCode(lobby.inviteCode))
+    }
+
+    @Test
+    fun `cleanup preserves grace period active rounds and scored players`() {
+        games.disconnectPlayerFromLobby(guest, "guest-1") { _, _ -> }
+        assertTrue(games.removeExpiredPlayers(0).isEmpty())
+        games.addPlayerToLobby(lobby.gameId, guest, "Guest", "guest-2") { _, _ -> }
+        games.startNewRound(lobby.gameId, host) { }
+        games.disconnectPlayerFromLobby(guest, "guest-2") { _, _ -> }
+        assertTrue(games.removeExpiredPlayers(Long.MAX_VALUE).isEmpty())
+        games.abortRound(lobby.gameId, host) { }
+        games.changeGameWithLock(lobby.gameId) { it.players.getValue(guest).score.add(12) }
+        assertTrue(games.removeExpiredPlayers(Long.MAX_VALUE).isEmpty())
+        assertEquals(2, lobby.players.size)
+    }
+
+    @Test
+    fun `departure snapshot survives subsequent joins and expired player can join elsewhere`() {
+        games.disconnectPlayerFromLobby(guest, "guest-1") { _, _ -> }
+        val (gameId, message) = games.removeExpiredPlayers(Long.MAX_VALUE).single()
+        games.addPlayerToLobby(lobby.gameId, UUID.randomUUID(), "New guest") { _, _ -> }
+        val other = games.createLobby(UUID.randomUUID())
+        games.addPlayerToLobby(other.gameId, guest, "Guest", "guest-new") { _, _ -> }
+        assertEquals(lobby.gameId, gameId)
+        assertEquals(1, message.remainingPlayersNumber)
+        assertFalse(message.isGameStarted)
+        assertEquals("Guest", message.player.name)
+        assertEquals(other.gameId, games.gameIdByPlayerId(guest))
+        assertTrue(games.removeExpiredPlayers(Long.MAX_VALUE).isEmpty())
     }
 }
