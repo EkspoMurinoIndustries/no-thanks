@@ -1,3 +1,22 @@
+## Card artwork builds
+
+Builds require Java 11 and Node.js 20.9+ with npm (CI uses Node.js 24).
+Gradle installs the pinned Sharp encoder using `npm ci`, then generates WebP
+cards automatically for `build`, `bootRun`, and `test`. Subsequent builds skip
+installation and generation when their inputs and outputs are unchanged.
+
+Keep the original numbered PNGs in `src/main/resources/static/img/cards/`.
+They remain unchanged and are excluded from the application JAR. Generated
+files live under `build/generated/card-artwork/` and are not committed.
+The encoder preserves aspect ratio, fits within 488 × 732 pixels (twice the
+desktop display size), and uses WebP quality 85. Settings live in
+`tools/card-artwork/generate.cjs`. Run `./gradlew generateCardArtwork` to
+regenerate independently, or use `gradlew.bat` on Windows.
+
+Use Gradle builds/runs in the IDE so generated resources are included.
+Production still runs only the JAR; Node.js is required on the build machine,
+not on the application server. The first build requires npm registry access.
+
 ## Mobile reconnection
 
 Temporary disconnects keep a player's seat and game state. The browser reconnects

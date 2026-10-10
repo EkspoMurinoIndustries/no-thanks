@@ -225,7 +225,7 @@ function renderCurrentCard(number) {
         .attr({alt: `Card ${number}`, width: 244, height: 366})
         .on('load', () => fallback.hide())
         .on('error', function () { $(this).remove(); fallback.show() })
-    artwork.attr('src', `img/cards/${number}.png`)
+    artwork.attr('src', `img/cards/${number}.webp`)
     currentCardBlock.append(artwork)
 }
 

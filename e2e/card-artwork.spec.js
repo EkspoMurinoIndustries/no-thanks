@@ -2,6 +2,11 @@ const { test, expect } = require('@playwright/test')
 
 test('card artwork has consistent dimensions and readable fallbacks', async ({ page }) => {
     await page.goto('/')
+    const response = await page.request.get('/img/cards/3.webp')
+    expect(response.status()).toBe(200)
+    expect(response.headers()['content-type']).toBe('image/webp')
+    expect((await response.body()).length).toBeLessThan(150_000)
+    expect((await page.request.get('/img/cards/3.png')).status()).toBe(404)
     await page.evaluate(() => {
         $('#auth-screen, #create-and-connect-game-screen').hide()
         $('#game-screen').show()
@@ -12,9 +17,10 @@ test('card artwork has consistent dimensions and readable fallbacks', async ({ p
         for (const number of [3, 35, 55]) {
             await page.evaluate(number => renderCurrentCard(number), number)
             const artwork = page.locator('#current-card img')
-            await expect(artwork).toHaveAttribute('src', `img/cards/${number}.png`)
+            await expect(artwork).toHaveAttribute('src', `img/cards/${number}.webp`)
             await expect(artwork).toHaveAttribute('alt', `Card ${number}`)
             await expect.poll(() => artwork.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true)
+            expect(await artwork.evaluate(img => img.naturalWidth)).toBeLessThanOrEqual(488)
             await expect(page.locator('.current-card-fallback')).toBeHidden()
             const box = await artwork.boundingBox()
             expect(box.width / box.height).toBeCloseTo(2 / 3)
@@ -32,7 +38,7 @@ test('card artwork has consistent dimensions and readable fallbacks', async ({ p
         await expect(page.locator('#current-card img')).toHaveCount(0)
         await expect(page.locator('.current-card-fallback')).toHaveText(String(number))
     }
-    await page.route('**/img/cards/40.png', route => route.abort())
+    await page.route('**/img/cards/40.webp', route => route.abort())
     await page.evaluate(() => renderCurrentCard(40))
     await expect(page.locator('#current-card img')).toHaveCount(0)
     await expect(page.locator('.current-card-fallback')).toBeVisible()
