@@ -120,7 +120,24 @@ avatarPreview.on('pointerdown', function (event) {
     drawAvatar()
 }).on('pointerup pointercancel lostpointercapture', () => { avatarDrag = null })
 
-function saveAvatar() {
+async function uploadAvatar(avatar) {
+    const gameId = activeGameId
+    const response = await fetch(`/api/lobbies/${gameId}/avatar`, {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({avatar})
+    })
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}))
+        throw new Error(error.message || 'Could not save your avatar. Please try again.')
+    }
+    const message = await response.json()
+    rememberAvatar(avatar)
+    if (activeGameId === gameId) updateAvatar(message.playerNumber, message.avatar)
+}
+
+async function saveAvatar() {
     if (!avatarImage) return
     if (!stompClient || !stompClient.connected) {
         avatarError('Reconnect to the game before saving your avatar.')
@@ -139,5 +156,12 @@ function saveAvatar() {
         return
     }
     avatarSaveButton.prop('disabled', true)
-    stompClient.send('/app/lobby/input/avatar', {}, JSON.stringify({avatar}))
+    try {
+        await uploadAvatar(avatar)
+        closeAvatarEditor()
+    } catch (error) {
+        avatarError(error.message)
+    } finally {
+        avatarSaveButton.prop('disabled', false)
+    }
 }

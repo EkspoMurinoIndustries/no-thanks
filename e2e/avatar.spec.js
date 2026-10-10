@@ -4,6 +4,17 @@ test('players crop their own avatar and share it across lobby game and reload', 
     test.setTimeout(60_000)
     const contexts = await Promise.all([browser.newContext(), browser.newContext()])
     const [host, guest] = await Promise.all(contexts.map(context => context.newPage()))
+    const frames = []
+    const uploads = []
+    for (const page of [host, guest]) {
+        page.on('websocket', socket => {
+            socket.on('framesent', frame => frames.push(String(frame.payload)))
+            socket.on('framereceived', frame => frames.push(String(frame.payload)))
+        })
+        page.on('request', request => {
+            if (request.method() === 'PUT' && request.url().endsWith('/avatar')) uploads.push(request)
+        })
+    }
     try {
         for (const [page, name] of [[host, 'AvatarHost'], [guest, 'AvatarGuest']]) {
             await page.goto('/')
@@ -13,10 +24,16 @@ test('players crop their own avatar and share it across lobby game and reload', 
         }
         await host.getByRole('button', { name: 'Create Game' }).click()
         await expect(host.locator('#invite-code')).toHaveText(/^[A-Z]{5}$/)
+        await guest.evaluate(() => {
+            const canvas = document.createElement('canvas')
+            canvas.width = canvas.height = 96
+            localStorage.setItem('no-thanks-avatar', canvas.toDataURL('image/jpeg'))
+        })
         await guest.locator('#inviteCode').fill(await host.locator('#invite-code').innerText())
         await guest.getByRole('button', { name: 'Connect', exact: true }).click()
         await expect(guest.locator('#lobby-screen')).toBeVisible()
         await expect(guest.locator('#lobby-player-li-0 button.editable-avatar')).toHaveCount(0)
+        await expect(host.locator('#lobby-player-li-1 img')).toHaveAttribute('src', /^\/avatars\/.*\.jpg$/)
 
         const imageData = await host.evaluate(() => {
             const canvas = document.createElement('canvas')
@@ -40,9 +57,14 @@ test('players crop their own avatar and share it across lobby game and reload', 
         await host.locator('#avatar-x').fill('0')
         await host.getByRole('button', { name: 'Save avatar' }).click()
         await expect(host.locator('#avatar-editor')).not.toBeVisible()
-        await expect(guest.locator('#lobby-player-li-0 img')).toHaveAttribute('src', /^data:image\/jpeg;base64,/)
+        await expect(guest.locator('#lobby-player-li-0 img')).toHaveAttribute('src', /^\/avatars\/.*\.jpg$/)
         const firstAvatar = await host.locator('#lobby-player-li-0 img').getAttribute('src')
         await expect(guest.locator('#lobby-player-li-0 img')).toHaveAttribute('src', firstAvatar)
+        const avatarResponse = await guest.request.get(firstAvatar)
+        expect(avatarResponse.status()).toBe(200)
+        expect(avatarResponse.headers()['content-type']).toBe('image/jpeg')
+        await expect.poll(() => guest.locator('#lobby-player-li-0 img').evaluate(img => img.naturalWidth)).toBe(96)
+        expect(await host.evaluate(() => localStorage.getItem('no-thanks-avatar'))).toMatch(/^data:image\/jpeg;base64,/)
 
         await host.locator('#start-game-button').click()
         await expect(host.locator('#own-avatar img')).toHaveAttribute('src', firstAvatar)
@@ -65,6 +87,9 @@ test('players crop their own avatar and share it across lobby game and reload', 
         await host.reload()
         await expect(host.locator('#game-screen')).toBeVisible()
         await expect(host.locator('#own-avatar img')).toHaveAttribute('src', secondAvatar)
+        expect(uploads).toHaveLength(3) // Saved guest avatar plus two host edits; reload needs no upload.
+        expect(frames.length).toBeGreaterThan(0)
+        expect(frames.join('\n')).not.toContain('data:image/')
         await host.locator('#avatar-file').setInputFiles(file)
         await expect(host.locator('#avatar-editor')).toBeVisible()
         await host.getByRole('button', { name: 'Cancel', exact: true }).click()

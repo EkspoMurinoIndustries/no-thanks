@@ -86,7 +86,7 @@ function connectAndSend(message) {
         showErrorMessage('Name cannot be blank')
         return
     }
-    desiredConnection = {...message, name, avatar: savedAvatar()}
+    desiredConnection = {...message, name}
     if (connectionPending) return
     if (stompClient && stompClient.connected) {
         connectionPending = true
@@ -105,7 +105,7 @@ function openConnection() {
     if (!desiredConnection || connectionPending || document.hidden) return
     stopConnection()
     connectionPending = true
-    desiredConnection = {...desiredConnection, name: parseCookie()['no-thanks-name'], avatar: savedAvatar()}
+    desiredConnection = {...desiredConnection, name: parseCookie()['no-thanks-name']}
     const generation = connectionGeneration
     const socket = new SockJS('/no-thanks')
     const client = Stomp.over(socket)
@@ -164,10 +164,6 @@ function processTopicMessage(message) {
     }
     if (message.type === 'PlayerAvatarChangedMessage') {
         updateAvatar(message.playerNumber, message.avatar)
-        if (message.playerNumber === myNumber) {
-            rememberAvatar(message.avatar)
-            closeAvatarEditor()
-        }
     }
     if (message['type'] === 'ParamsChangedMessage') {
         currentParams = message.newParams
@@ -248,7 +244,7 @@ function processDirectInfoMessage(message) {
         clearTimeout(connectionTimeout)
         clearTimeout(reconnectTimer)
         connectionPending = false
-        desiredConnection = {inviteCode: message.inviteCode, name: parseCookie()['no-thanks-name'], avatar: savedAvatar()}
+        desiredConnection = {inviteCode: message.inviteCode, name: parseCookie()['no-thanks-name']}
         gameSubscriptions.forEach(subscription => subscription.unsubscribe())
         gameSubscriptions = []
         window.history.replaceState({}, '', message.inviteCode)
@@ -268,6 +264,11 @@ function processDirectInfoMessage(message) {
         if (message['isStarted'] === true) {
             let game = message['gameStatus']
             renderGameScreen(game.players, game['currentCard'], game['currentPlayerNumber'], game['remainingNumberCards'], game['currentCardCoin'])
+        }
+        // Existing lobbies retain avatars on reconnect; new lobbies restore via HTTP.
+        const ownPlayer = message.players.find(player => player.number === myNumber)
+        if (ownPlayer && !ownPlayer.avatar && savedAvatar()) {
+            uploadAvatar(savedAvatar()).catch(error => showErrorMessage(error.message))
         }
     }
 }

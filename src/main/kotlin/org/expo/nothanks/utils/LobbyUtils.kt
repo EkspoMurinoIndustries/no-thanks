@@ -68,7 +68,7 @@ fun Lobby.getSafeLobbyPlayers(): List<SafeLobbyPlayer> {
             number = it.number,
             name = it.name,
             score = it.score,
-            avatar = it.avatar,
+            avatar = it.avatarUrl(gameId),
             disconnected = it.id in disconnectedPLayers
         )
     }
@@ -96,7 +96,7 @@ fun Lobby.getGame(): Game {
 
 fun Lobby.getPlayersInGame(): List<SafeGamePlayer> {
     return getGame().playerSequence().map {
-        it.toSafeGamePlayer(players[it.id]!!.name, players[it.id]!!.avatar, it.id in disconnectedPLayers)
+        it.toSafeGamePlayer(players[it.id]!!.name, players[it.id]!!.avatarUrl(gameId), it.id in disconnectedPLayers)
     }.toList()
 }
 
@@ -117,7 +117,7 @@ fun Lobby.getPlayerInLobby(playerId: UUID): SafeLobbyPlayer {
             name = it.name,
             number = it.number,
             score = it.score,
-            avatar = it.avatar,
+            avatar = it.avatarUrl(gameId),
             disconnected = it.id in disconnectedPLayers
         )
     } ?: throw PlayerException("Player has not been found", gameId, playerId)
@@ -129,7 +129,7 @@ fun Lobby.getPlayersInLobby(): List<SafeLobbyPlayer> {
             name = it.name,
             number = it.number,
             score = it.score,
-            avatar = it.avatar,
+            avatar = it.avatarUrl(gameId),
             disconnected = it.id in disconnectedPLayers
         )
     }.toList()

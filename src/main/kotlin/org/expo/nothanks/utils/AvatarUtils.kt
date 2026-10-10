@@ -4,6 +4,17 @@ import org.expo.nothanks.exception.NoThanksException
 import java.io.ByteArrayInputStream
 import java.util.Base64
 import javax.imageio.ImageIO
+import org.expo.nothanks.model.lobby.LobbyPlayer
+import java.security.MessageDigest
+import java.util.UUID
+
+fun String.avatarVersion(): String = MessageDigest.getInstance("SHA-256")
+    .digest(toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+
+// Use the public player number, never the player's authentication token, in URLs.
+fun LobbyPlayer.avatarUrl(gameId: UUID): String? = avatar?.let {
+    "/avatars/$gameId/$number/${it.avatarVersion()}.jpg"
+}
 
 // Bounded thumbnails keep uploads and lobby broadcasts small on the game server.
 fun String?.validatedAvatar(): String? {
