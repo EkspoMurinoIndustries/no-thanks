@@ -1,5 +1,10 @@
 no-thanks:
   reconnect-grace-ms: 300000
+  game-limits:
+    min-card: 1
+    min-biggest-card: 35
+    max-card: 55
+    max-tokens: 10000
   cookies:
     id: no-thanks-token
     name: no-thanks-name

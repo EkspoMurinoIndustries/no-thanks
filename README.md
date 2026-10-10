@@ -17,6 +17,16 @@ Use Gradle builds/runs in the IDE so generated resources are included.
 Production still runs only the JAR; Node.js is required on the build machine,
 not on the application server. The first build requires npm registry access.
 
+## Game settings limits
+
+`no-thanks.game-limits` in `application.yml` controls the smallest allowed card,
+the minimum and maximum allowed values for the biggest card, and the maximum
+initial tokens. `min-biggest-card` is the lower bound of the "Biggest card"
+setting, not the smallest card in the deck. Default game settings remain under
+`no-thanks.default-game-params` and must fit within these limits.
+The server sends the limits to the settings form, so changing them requires no
+HTML or JavaScript edits. Configuration changes take effect after restarting.
+
 ## Mobile reconnection
 
 Temporary disconnects keep a player's seat and game state. The browser reconnects

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 import java.util.UUID
 
 internal class LobbyReconnectTest {
-    private val games = GamesService(DefaultGameProperties(3, 35, 9, 2, 8, (2..8).associateWith { 11 }), 1000)
+    private val games = GamesService(DefaultGameProperties(3, 35, 9, 2, 8, (2..8).associateWith { 11 }), 1000, org.expo.nothanks.testGameLimits())
     private val host = UUID.randomUUID()
     private val guest = UUID.randomUUID()
     private val lobby = games.createLobby(host).also {

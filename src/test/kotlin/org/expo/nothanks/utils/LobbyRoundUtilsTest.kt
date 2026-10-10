@@ -91,7 +91,8 @@ internal class LobbyRoundUtilsTest {
                 minCard = 3,
                 maxCard = 5,
                 removedCards = 1,
-                maxPlayerNumber = 8
+                maxPlayerNumber = 8,
+                limits = org.expo.nothanks.testGameLimits()
             )
         ).also {
             it.addPlayer(creator, "Creator")

@@ -14,8 +14,8 @@ data class DefaultGameProperties (
     val coinsMap: Map<Int, Int>
 ) {
     init {
-        require((minPlayerNumber..maxPlayerNumber).all { coinsMap[it] in 0..10000 }) {
-            "coins-map must define a token count between 0 and 10000 for every supported player count"
+        require((minPlayerNumber..maxPlayerNumber).all { (coinsMap[it] ?: -1) >= 0 }) {
+            "coins-map must define a non-negative token count for every supported player count"
         }
     }
 }

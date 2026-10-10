@@ -33,10 +33,11 @@ test('card artwork has consistent dimensions and readable fallbacks', async ({ p
             expectedBox = box
         }
     }
-    for (const number of [1, 2]) {
+    for (const number of [1, 2, 56]) {
         await page.evaluate(number => renderCurrentCard(number), number)
         await expect(page.locator('#current-card img')).toHaveCount(0)
         await expect(page.locator('.current-card-fallback')).toHaveText(String(number))
+        await expect(page.locator('.current-card-fallback')).toBeVisible()
     }
     await page.route('**/img/cards/40.webp', route => route.abort())
     await page.evaluate(() => renderCurrentCard(40))

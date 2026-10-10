@@ -219,8 +219,6 @@ function renderCurrentCard(number) {
     currentCardBlock.empty().attr('aria-label', `Card ${number}`)
     const fallback = $('<span class="current-card-fallback">').text(number)
     currentCardBlock.append(fallback)
-    // Custom decks may include 1 or 2, for which there is no artwork.
-    if (number < 3 || number > 55) return
     const artwork = $('<img class="current-card-artwork" alt="Current card">')
         .attr({alt: `Card ${number}`, width: 244, height: 366})
         .on('load', () => fallback.hide())

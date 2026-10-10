@@ -10,7 +10,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit.SECONDS
 
 internal class LobbyConcurrencyTest {
-    private val games = GamesService(DefaultGameProperties(3, 35, 9, 2, 8, (2..8).associateWith { 11 }), 1000)
+    private val games = GamesService(DefaultGameProperties(3, 35, 9, 2, 8, (2..8).associateWith { 11 }), 1000, org.expo.nothanks.testGameLimits())
 
     @Test
     fun `busy lobby does not block another lobby while same lobby stays serialized`() {
@@ -60,7 +60,7 @@ internal class LobbyConcurrencyTest {
                     try {
                         games.addPlayerToLobby(lobby.gameId, player, "Guest") { _, _ -> }
                         true
-                    } catch (expected: GameException) {
+                    } catch (_: GameException) {
                         false
                     }
                 }

@@ -25,7 +25,7 @@ import javax.servlet.http.Cookie
 internal class AvatarControllerTest {
     @Test
     fun `only the sending player changes and avatar is included in lobby and round snapshots`() {
-        val games = GamesService(DefaultGameProperties(3, 35, 9, 2, 8, (2..8).associateWith { 11 }), 300000)
+        val games = GamesService(DefaultGameProperties(3, 35, 9, 2, 8, (2..8).associateWith { 11 }), 300000, org.expo.nothanks.testGameLimits())
         val notifications = mock(NotificationService::class.java)
         val http = MockMvcBuilders.standaloneSetup(AvatarImageController(games, notifications))
             .setControllerAdvice(RestExceptionHandler()).build()

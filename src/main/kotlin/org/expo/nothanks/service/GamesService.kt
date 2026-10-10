@@ -1,6 +1,7 @@
 package org.expo.nothanks.service
 
 import org.expo.nothanks.config.properties.DefaultGameProperties
+import org.expo.nothanks.config.properties.GameLimitsProperties
 import org.expo.nothanks.exception.GameException
 import org.expo.nothanks.exception.GameHasNotBeenFound
 import org.expo.nothanks.exception.InviteHasNotBeenFound
@@ -20,8 +21,21 @@ import java.util.concurrent.locks.ReentrantLock
 @Service
 class GamesService(
     private val gameProperties: DefaultGameProperties,
-    @Value("\${no-thanks.reconnect-grace-ms:300000}") private val reconnectGraceMillis: Long
+    @Value("\${no-thanks.reconnect-grace-ms:300000}") private val reconnectGraceMillis: Long,
+    private val gameLimits: GameLimitsProperties
 ) {
+    init {
+        require(gameProperties.maxCard in gameLimits.minBiggestCard..gameLimits.maxCard &&
+            gameProperties.minCard in gameLimits.minCard..gameProperties.maxCard) {
+            "Default card range must fit within game-limits"
+        }
+        require(gameProperties.removedCards in 0 until (gameProperties.maxCard - gameProperties.minCard + 1)) {
+            "Default removed-cards must leave at least one card"
+        }
+        require((gameProperties.minPlayerNumber..gameProperties.maxPlayerNumber).all {
+            gameProperties.coinsMap[it] in 0..gameLimits.maxTokens
+        }) { "Default coins-map must fit within game-limits.max-tokens" }
+    }
 
     private class LobbyEntry(val lobby: Lobby, val lock: ReentrantLock = ReentrantLock())
 
@@ -251,6 +265,7 @@ class GamesService(
         maxCard = gameProperties.maxCard,
         removedCards = gameProperties.removedCards,
         maxPlayerNumber = gameProperties.maxPlayerNumber,
-        useDefaultTokens = true
+        useDefaultTokens = true,
+        limits = gameLimits
     )
 }

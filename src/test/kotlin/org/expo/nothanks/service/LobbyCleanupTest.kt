@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit.SECONDS
 internal class LobbyCleanupTest {
     @Test
     fun `departure notification is sent after releasing the lobby lock`() {
-        val games = GamesService(DefaultGameProperties(3, 35, 9, 2, 8, (2..8).associateWith { 11 }), -1)
+        val games = GamesService(DefaultGameProperties(3, 35, 9, 2, 8, (2..8).associateWith { 11 }), -1, org.expo.nothanks.testGameLimits())
         val host = UUID.randomUUID()
         val guest = UUID.randomUUID()
         val lobby = games.createLobby(host)

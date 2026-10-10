@@ -279,6 +279,10 @@ function startGame() {
 
 function openSettings() {
     if (!amCreator || !lobbyScreen.is(':visible')) return
+    const limits = currentParams.limits
+    settingsMinCardInput.attr('min', limits.minCard)
+    settingsMaxCardInput.attr({min: limits.minBiggestCard, max: limits.maxCard})
+    settingsTokensInput.attr('max', limits.maxTokens)
     settingsMinCardInput.val(currentParams.minCard)
     settingsMaxCardInput.val(currentParams.maxCard)
     settingsRemovedCardsInput.val(currentParams.removedCards)
