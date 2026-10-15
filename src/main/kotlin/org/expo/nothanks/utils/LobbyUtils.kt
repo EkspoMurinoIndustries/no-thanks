@@ -43,18 +43,6 @@ fun Lobby.addPlayer(playerId: UUID, name: String): Boolean {
     return false
 }
 
-fun Lobby.setNotActive() {
-    active = false
-}
-
-fun Lobby.shouldBeDeleted(): Boolean {
-    return if (isGameStarted()) {
-        getGame().playerCount == disconnectedPLayers.size
-    } else {
-        players.isEmpty()
-    }
-}
-
 fun Lobby.gameStatusOrNull(playerId: UUID): GameStatus? {
     return if (isGameStarted()) {
         val game = getGame()
@@ -79,7 +67,9 @@ fun Lobby.getSafeLobbyPlayers(): List<SafeLobbyPlayer> {
         SafeLobbyPlayer(
             number = it.number,
             name = it.name,
-            score = it.score
+            score = it.score,
+            avatar = it.avatarUrl(gameId),
+            disconnected = it.id in disconnectedPLayers
         )
     }
 }
@@ -88,11 +78,7 @@ fun Lobby.disconnectPlayer(playerId: UUID) {
     if (!players.values.any { it.id == playerId }) {
         throw PlayerException("Impossible to disconnect player from this game", gameId, playerId)
     }
-    if (isGameStarted() || getPlayerInLobby(playerId).score.isNotEmpty()) {
-        disconnectedPLayers.add(playerId)
-    } else {
-        removePlayer(playerId)
-    }
+    disconnectedPLayers.add(playerId)
 }
 
 fun Lobby.canBeReconnected(playerId: UUID): Boolean {
@@ -110,16 +96,18 @@ fun Lobby.getGame(): Game {
 
 fun Lobby.getPlayersInGame(): List<SafeGamePlayer> {
     return getGame().playerSequence().map {
-        it.toSafeGamePlayer(players[it.id]!!.name)
+        it.toSafeGamePlayer(players[it.id]!!.name, players[it.id]!!.avatarUrl(gameId), it.id in disconnectedPLayers)
     }.toList()
 }
 
-fun Player.toSafeGamePlayer(name: String): SafeGamePlayer {
+fun Player.toSafeGamePlayer(name: String, avatar: String? = null, disconnected: Boolean = false): SafeGamePlayer {
     return SafeGamePlayer(
         name = name,
         number = this.number,
         cards = this.cards,
-        coins = this.coins
+        coins = this.coins,
+        avatar = avatar,
+        disconnected = disconnected
     )
 }
 
@@ -128,7 +116,9 @@ fun Lobby.getPlayerInLobby(playerId: UUID): SafeLobbyPlayer {
         SafeLobbyPlayer(
             name = it.name,
             number = it.number,
-            score = it.score
+            score = it.score,
+            avatar = it.avatarUrl(gameId),
+            disconnected = it.id in disconnectedPLayers
         )
     } ?: throw PlayerException("Player has not been found", gameId, playerId)
 }
@@ -138,7 +128,9 @@ fun Lobby.getPlayersInLobby(): List<SafeLobbyPlayer> {
         SafeLobbyPlayer(
             name = it.name,
             number = it.number,
-            score = it.score
+            score = it.score,
+            avatar = it.avatarUrl(gameId),
+            disconnected = it.id in disconnectedPLayers
         )
     }.toList()
 }
@@ -199,10 +191,29 @@ fun Lobby.getResult(): Map<Int, Score> {
 }
 
 fun Lobby.updateParams(newParams: NewParams) {
-    params.maxCard = newParams.maxCard ?: params.maxCard
-    params.minCard = newParams.minCard ?: params.minCard
-    params.initialCoinsCount = newParams.defaultCoinsCount ?: params.initialCoinsCount
-    params.extraCards = newParams.extraCards ?: params.extraCards
+    val limits = params.limits
+    val maxCard = newParams.maxCard ?: params.maxCard
+    val minCard = newParams.minCard ?: params.minCard
+    val tokens = newParams.defaultCoinsCount ?: params.initialCoinsCount
+    val removedCards = newParams.removedCards ?: params.removedCards
+    if (maxCard !in limits.minBiggestCard..limits.maxCard) {
+        throw GameException("Biggest card must be between ${limits.minBiggestCard} and ${limits.maxCard}", gameId)
+    }
+    if (minCard !in limits.minCard..maxCard) {
+        throw GameException("Smallest card must be between ${limits.minCard} and the biggest card ($maxCard)", gameId)
+    }
+    if (removedCards < 0 || removedCards >= maxCard - minCard + 1) {
+        throw GameException("Leave at least one card in the round", gameId)
+    }
+    if (tokens !in 0..limits.maxTokens) {
+        throw GameException("Initial tokens must be between 0 and ${limits.maxTokens}", gameId)
+    }
+    params.maxCard = maxCard
+    params.minCard = minCard
+    params.initialCoinsCount = tokens
+    params.removedCards = removedCards
+    params.useDefaultTokens = newParams.useDefaultTokens
+        ?: if (newParams.defaultCoinsCount != null) false else params.useDefaultTokens
 }
 
 fun Lobby.reset() {

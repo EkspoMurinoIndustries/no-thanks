@@ -37,12 +37,8 @@ class NotificationService(
         ))
     }
 
-    fun playerLeft(lobby: Lobby, player: SafeLobbyPlayer) {
-        messageToTopic(lobby, PlayerLeftMessage(
-            player = player,
-            isGameStarted = lobby.isGameStarted(),
-            remainingPlayersNumber = lobby.players.size
-        ))
+    fun playerLeft(gameId: UUID, message: PlayerLeftMessage) {
+        messageToTopic(gameId, message)
     }
 
     fun lobbyConnection(lobby: Lobby, playerId: UUID) {
@@ -54,7 +50,7 @@ class NotificationService(
 
     fun reconnect(lobby: Lobby, playerId: UUID) {
         val playerInLobby = lobby.getPlayerInLobby(playerId)
-        val gameInfo = lobby.game?.getPlayer(playerId)?.toSafeGamePlayer(playerInLobby.name)
+        val gameInfo = lobby.game?.getPlayer(playerId)?.toSafeGamePlayer(playerInLobby.name, playerInLobby.avatar)
         messageToTopic(lobby, PlayerReconnectedMessage(
             gameStarted = lobby.isGameStarted(),
             player = playerInLobby,
@@ -119,6 +115,10 @@ class NotificationService(
             newName = newName,
             playerNumber = lobby.getPlayer(playerId).number
         ))
+    }
+
+    fun updateAvatar(lobby: Lobby, playerId: UUID, avatar: String?) {
+        messageToTopic(lobby, PlayerAvatarChangedMessage(lobby.getPlayer(playerId).number, avatar))
     }
 
     fun updatePersonalPlayerName(lobby: Lobby, playerId: UUID, newName: String) {

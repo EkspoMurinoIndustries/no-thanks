@@ -2,7 +2,6 @@ package org.expo.nothanks.security
 
 import org.expo.nothanks.service.GamesService
 import org.expo.nothanks.service.NotificationService
-import org.expo.nothanks.utils.canBeReconnected
 import org.expo.nothanks.utils.getPlayerId
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
@@ -13,18 +12,10 @@ class WebSocketEventListener(val gameService: GamesService, val notificationServ
 
     @EventListener
     fun afterConnectionClosed(event: SessionDisconnectEvent) {
-        val principal = event.user as StompPrincipal
+        val principal = event.user as? StompPrincipal ?: return
         val playerId = principal.getPlayerId()
-        val gameId = gameService.gameIdByPlayerId(playerId)
-        gameService.disconnectPlayerFromLobby(playerId) { lobby, disconnectedPlayer ->
-            if (lobby.canBeReconnected(playerId)) {
-                notificationService.playerDisconnected(lobby, disconnectedPlayer)
-            } else {
-                notificationService.playerLeft(lobby, disconnectedPlayer)
-            }
-            if (!lobby.active) {
-                notificationService.lobbyClosed(gameId)
-            }
+        gameService.disconnectPlayerFromLobby(playerId, event.sessionId) { lobby, disconnectedPlayer ->
+            notificationService.playerDisconnected(lobby, disconnectedPlayer)
         }
     }
 

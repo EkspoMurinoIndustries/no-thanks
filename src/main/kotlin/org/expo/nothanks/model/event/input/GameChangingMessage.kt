@@ -11,5 +11,7 @@ data class NewParams(
     val defaultCoinsCount: Int? = null,
     val minCard: Int? = null,
     val maxCard: Int? = null,
-    val extraCards: Int? = null
+    val removedCards: Int? = null,
+    val useDefaultTokens: Boolean? = null,
+    val resetToDefaults: Boolean = false
 )

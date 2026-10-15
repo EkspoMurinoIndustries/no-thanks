@@ -65,8 +65,12 @@ test('round controls, score reset, next round, and in-game results stay in sync'
 
         const activePage = await creator.locator('#take-card').isVisible() ? creator : guest
         const cardsBeforeAbort = await activePage.locator('#current-card-left-coins').textContent()
+        const artworkBefore = await activePage.locator('#current-card img').getAttribute('src')
         await activePage.locator('#take-card').click()
         await expect(activePage.locator('#current-card-left-coins')).not.toHaveText(cardsBeforeAbort)
+        await expect(activePage.locator('#current-card img')).not.toHaveAttribute('src', artworkBefore)
+        await expect(guest.locator('#current-card img')).not.toHaveAttribute('src', artworkBefore)
+        await expect(creator.locator('#current-card img')).toHaveAttribute('src', await guest.locator('#current-card img').getAttribute('src'))
 
         creator.once('dialog', dialog => dialog.accept())
         await creator.locator('#abort-round-button').click()

@@ -111,8 +111,8 @@ Linux normally uses otherwise-idle RAM for reclaimable filesystem cache.
   and 443); do not expose application port 8080 publicly.
 - Avoid adding memory-heavy services, containers, monitoring stacks, or databases
   to a constrained host without measuring their resident memory.
-- Fix abandoned-lobby retention in the application eventually; it remains a
-  source of long-term memory growth.
+- Lobbies expire after the host has been disconnected for five minutes by default.
+  The grace period is configured with `no-thanks.reconnect-grace-ms`.
 - A host with at least 1 GiB RAM provides a substantially safer operating margin.
   On smaller hosts, monitor memory periodically.
 
